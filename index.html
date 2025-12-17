@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Inventaris SKB Muara Badak</title>
+
+<style>
+body{font-family:Arial;margin:0;background:#f1f5f9}
+
+/* LOGIN */
+#loginBox{
+max-width:420px;
+margin:90px auto;
+background:white;
+padding:30px;
+border-radius:12px;
+box-shadow:0 4px 12px rgba(0,0,0,.15);
+text-align:center
+}
+#loginBox img{height:80px;margin-bottom:10px}
+
+header{background:#1e40af;color:white;padding:15px;display:flex;align-items:center}
+header img{height:45px;margin-right:15px}
+
+.container{padding:20px}
+.menu{display:flex;gap:15px;margin-bottom:20px}
+.menu button{padding:12px 18px;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
+.masuk{background:#2563eb;color:white}
+.keluar{background:#dc2626;color:white}
+
+.card{background:white;padding:20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.1);margin-bottom:20px}
+
+input,select,textarea{
+width:100%;
+padding:10px;
+margin:8px 0;
+border-radius:6px;
+border:1px solid #ccc
+}
+
+button.simpan{
+background:#16a34a;
+color:white;
+border:none;
+padding:10px;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer
+}
+
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:#e5e7eb}
+
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginBox">
+    <img src="logo.png">
+    <h2>Selamat Datang</h2>
+    <p>Inventaris SKB Muara Badak</p>
+
+    <input id="user" placeholder="Username">
+    <input id="pass" type="password" placeholder="Password">
+
+    <button class="simpan" onclick="login()">Masuk</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="app" class="hidden">
+
+<header>
+    <img src="logo.png">
+    <h2>Inventaris SKB Muara Badak</h2>
+</header>
+
+<div class="container">
+
+<div class="menu">
+    <button class="masuk" onclick="showForm('masuk')">➕ Barang Masuk</button>
+    <button class="keluar" onclick="showForm('keluar')">➖ Barang Keluar</button>
+</div>
+
+<!-- BARANG MASUK -->
+<div class="card hidden" id="formMasuk">
+<h3>📥 Barang Masuk</h3>
+<input id="mNama" placeholder="Nama Barang">
+<input id="mJumlah" type="number" placeholder="Jumlah">
+<textarea id="mKet" placeholder="Keterangan"></textarea>
+<button class="simpan" onclick="simpanMasuk()">Simpan</button>
+</div>
+
+<!-- BARANG KELUAR -->
+<div class="card hidden" id="formKeluar">
+<h3>📤 Barang Keluar</h3>
+<input id="kNama" placeholder="Nama Barang">
+<input id="kJumlah" type="number" placeholder="Jumlah">
+
+<select id="kAmbil">
+<option value="">-- Diambil Oleh --</option>
+<option>Bu Munawarah. S.Pd</option>
+<option>Bu Liliana Sataria. S.Kom</option>
+<option>Bu Fatimah. S.Pd</option>
+<option>Bu Fitriyana. S.Pd</option>
+<option>Bu Hirda Yulinalmi</option>
+<option>Bu Dwi Rika. S.Pd</option>
+<option>Bu Uut</option>
+<option>Pak Heri Sadiman. S.Pd</option>
+<option>Pak Jemidin. S.Pd., M.Pd</option>
+<option>Pak Rehan</option>
+</select>
+
+<textarea id="kKet" placeholder="Keterangan"></textarea>
+<button class="simpan" onclick="simpanKeluar()">Simpan</button>
+</div>
+
+<!-- TABEL -->
+<div class="card">
+<h3>📊 Data Inventaris</h3>
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>Tanggal</th>
+<th>Barang</th>
+<th>Jenis</th>
+<th>Jumlah</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody id="tabel"></tbody>
+</table>
+</div>
+
+<button class="simpan" onclick="exportExcel()">📥 Export Excel</button>
+
+</div>
+</div>
+
+<script>
+const USERNAME='admin';
+const PASSWORD='12345';
+
+let data = JSON.parse(localStorage.getItem('inventaris')) || [];
+
+function login(){
+    const u=document.getElementById('user').value;
+    const p=document.getElementById('pass').value;
+
+    if(u===USERNAME && p===PASSWORD){
+        document.getElementById('loginBox').style.display='none';
+        document.getElementById('app').classList.remove('hidden');
+    }else{
+        alert('Username atau Password salah');
+    }
+}
+
+function showForm(j){
+    formMasuk.classList.add('hidden');
+    formKeluar.classList.add('hidden');
+    if(j==='masuk') formMasuk.classList.remove('hidden');
+    if(j==='keluar') formKeluar.classList.remove('hidden');
+}
+
+function simpanMasuk(){
+    data.push({
+        tanggal:new Date().toLocaleDateString(),
+        barang:mNama.value,
+        jenis:'Masuk',
+        jumlah:mJumlah.value,
+        ket:mKet.value
+    });
+    simpan();
+}
+
+function simpanKeluar(){
+    data.push({
+        tanggal:new Date().toLocaleDateString(),
+        barang:kNama.value,
+        jenis:'Keluar',
+        jumlah:kJumlah.value,
+        ket:`Diambil oleh ${kAmbil.value} | ${kKet.value}`
+    });
+    simpan();
+}
+
+function simpan(){
+    localStorage.setItem('inventaris',JSON.stringify(data));
+    tampil();
+}
+
+function tampil(){
+    let html='';
+    data.forEach((d,i)=>{
+        html+=`<tr>
+        <td>${i+1}</td>
+        <td>${d.tanggal}</td>
+        <td>${d.barang}</td>
+        <td>${d.jenis}</td>
+        <td>${d.jumlah}</td>
+        <td>${d.ket}</td>
+        </tr>`;
+    });
+    tabel.innerHTML=html;
+}
+
+function exportExcel(){
+    let csv='No,Tanggal,Barang,Jenis,Jumlah,Keterangan\\n';
+    data.forEach((d,i)=>{
+        csv+=`${i+1},${d.tanggal},${d.barang},${d.jenis},${d.jumlah},"${d.ket}"\\n`;
+    });
+    const blob=new Blob([csv],{type:'text/csv'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='Inventaris_SKB_Muara_Badak.csv';
+    a.click();
+}
+
+tampil();
+</script>
+
+</body>
+</html>
