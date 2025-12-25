@@ -137,7 +137,7 @@ button{cursor:pointer;border:none;border-radius:6px}
 <select id="fDanaDownload">
 <option value="">Semua Dana</option>
 </select>
-<button class="primary" onclick="downloadExcelFiles()">Download Excel Terpisah</button>
+<button class="primary" onclick="downloadFilteredExcel()">Download Excel</button>
 </div>
 
 </div>
@@ -252,29 +252,21 @@ t+=`<tr><td>${i+1}</td><td>${d.tipe}</td><td>${d.barang}</td><td>${d.jumlah}</td
 document.getElementById('tabel').innerHTML=t;
 }
 
-window.downloadExcelFiles=function(){
-if(data.length===0) return alert('Data kosong');
+window.downloadFilteredExcel=function(){
 const tipeFilter=document.getElementById('fTipe').value;
 const jenisFilter=document.getElementById('fJenisDownload').value;
 const danaFilter=document.getElementById('fDanaDownload').value;
-const grouped={};
-
-data.forEach(d=>{
-if(tipeFilter && d.tipe!==tipeFilter) return;
-if(jenisFilter && d.jenis!==jenisFilter) return;
-if(danaFilter && d.dana!==danaFilter) return;
-const key=`${d.tipe}-${d.jenis}-${d.dana}`;
-if(!grouped[key]) grouped[key]=[];
-grouped[key].push(d);
+let filtered=data.filter(d=>{
+if(tipeFilter && d.tipe!==tipeFilter) return false;
+if(jenisFilter && d.jenis!==jenisFilter) return false;
+if(danaFilter && d.dana!==danaFilter) return false;
+return true;
 });
-
-for(const key in grouped){
+if(filtered.length===0) return alert('Data tidak ditemukan sesuai filter');
+const ws=XLSX.utils.json_to_sheet(filtered, {header:["tipe","barang","jumlah","satuan","jenis","dana","pengambilan"]});
 const wb=XLSX.utils.book_new();
-const ws=XLSX.utils.json_to_sheet(grouped[key], {header:["tipe","barang","jumlah","satuan","jenis","dana","pengambilan"]});
-XLSX.utils.book_append_sheet(wb,ws,'Data');
-const filename=key.replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx';
-XLSX.writeFile(wb,filename);
-}
+XLSX.utils.book_append_sheet(wb,ws,'Inventaris');
+XLSX.writeFile(wb,'Inventaris_Filtered.xlsx');
 }
 
 updateDashboard();
