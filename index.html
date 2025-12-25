@@ -155,11 +155,15 @@ button{cursor:pointer;border:none;border-radius:6px}
 
 <script>
 const akun = [
-  {u:'admin', p:'123', r:'admin'},
+  {u:'admin', p:'12345', r:'admin'},
   {u:'operator', p:'123', r:'operator'},
   {u:'rehan', p:'456', r:'operator'}
 ];
+
 let data = JSON.parse(localStorage.getItem('inv')) || [];
+
+const masuk = document.getElementById('masuk');
+const keluar = document.getElementById('keluar');
 
 function login(){
   const username = document.getElementById('user');
@@ -179,7 +183,8 @@ function logout(){
 }
 
 function show(id){
-  masuk.classList.add('hidden'); keluar.classList.add('hidden');
+  masuk.classList.add('hidden');
+  keluar.classList.add('hidden');
   document.getElementById(id).classList.remove('hidden');
 }
 
