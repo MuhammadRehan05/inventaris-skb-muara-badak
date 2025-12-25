@@ -202,7 +202,7 @@ window.onload = function() {
     const satuan = document.getElementById('mSatuan').value;
 
     if(!tgl) tgl = new Date().toISOString().split('T')[0]; 
-    if(!barang || !jumlah) return alert('Lengkapi semua field!');
+    if(!barang || !jumlah || !jenis || !dana) return alert('Lengkapi semua field!');
     data.push({tipe:'Masuk', tanggal:tgl, barang, jenis, dana, jumlah:+jumlah, satuan, pengambilan:''});
     localStorage.setItem('inv', JSON.stringify(data));
     updateDashboard();
@@ -220,7 +220,7 @@ window.onload = function() {
     const ambil = document.getElementById('kAmbil').value;
 
     if(!tgl) tgl = new Date().toISOString().split('T')[0];
-    if(!jumlah) return alert('Lengkapi semua field!');
+    if(!jumlah || !jenis || !dana) return alert('Lengkapi semua field!');
     if(jumlah > stok(barang)) return alert('Stok tidak cukup');
     data.push({tipe:'Keluar', tanggal:tgl, barang, jumlah:+jumlah, satuan, jenis, dana, pengambilan:ambil});
     localStorage.setItem('inv', JSON.stringify(data));
@@ -271,7 +271,7 @@ window.onload = function() {
     data.forEach(d=>{
       if(fAwal && d.tanggal < fAwal) return;
       if(fAkhir && d.tanggal > fAkhir) return;
-      const key = `${d.tipe}-${d.jenis||'-' }-${d.dana||'-'}`;
+      const key = `${d.tipe}-${d.jenis}-${d.dana}`;
       if(!grouped[key]) grouped[key]=[];
       grouped[key].push(d);
     });
