@@ -189,32 +189,6 @@ window.onload = function() {
     document.getElementById(id).classList.remove('hidden');
   };
 
-  window.masukBarang = function() {
-    const tgl = document.getElementById('mTanggal').value;
-    const barang = document.getElementById('mBarang').value;
-    const jenis = document.getElementById('mJenis').value;
-    const dana = document.getElementById('mDana').value;
-    const jumlah = document.getElementById('mJumlah').value;
-    const satuan = document.getElementById('mSatuan').value;
-    if(!tgl || !barang || !jumlah) return alert('Lengkapi semua field!');
-    data.push({tipe:'Masuk', tanggal:tgl, barang, jenis, dana, jumlah:+jumlah, satuan});
-    localStorage.setItem('inv', JSON.stringify(data));
-    updateDashboard();
-  };
-
-  window.keluarBarang = function() {
-    const tgl = document.getElementById('kTanggal').value;
-    const barang = document.getElementById('kBarang').value;
-    const jumlah = document.getElementById('kJumlah').value;
-    const satuan = document.getElementById('kSatuan').value;
-    const ambil = document.getElementById('kAmbil').value;
-    if(!tgl || !jumlah) return alert('Lengkapi semua field!');
-    if(jumlah > stok(barang)) return alert('Stok tidak cukup');
-    data.push({tipe:'Keluar', tanggal:tgl, barang, jumlah:+jumlah, satuan, ambil});
-    localStorage.setItem('inv', JSON.stringify(data));
-    updateDashboard();
-  };
-
   function stok(barang) {
     let masukTotal = 0, keluarTotal = 0;
     data.forEach(d=>{
@@ -222,6 +196,44 @@ window.onload = function() {
       if(d.barang === barang && d.tipe === 'Keluar') keluarTotal += d.jumlah;
     });
     return masukTotal - keluarTotal;
+  }
+
+  window.masukBarang = function() {
+    let tgl = document.getElementById('mTanggal').value;
+    const barang = document.getElementById('mBarang').value;
+    const jenis = document.getElementById('mJenis').value;
+    const dana = document.getElementById('mDana').value;
+    const jumlah = document.getElementById('mJumlah').value;
+    const satuan = document.getElementById('mSatuan').value;
+
+    if(!tgl) tgl = new Date().toISOString().split('T')[0]; // default hari ini
+    if(!barang || !jumlah) return alert('Lengkapi semua field!');
+    data.push({tipe:'Masuk', tanggal:tgl, barang, jenis, dana, jumlah:+jumlah, satuan});
+    localStorage.setItem('inv', JSON.stringify(data));
+    updateDashboard();
+  };
+
+  window.keluarBarang = function() {
+    let tgl = document.getElementById('kTanggal').value;
+    const barang = document.getElementById('kBarang').value;
+    const jumlah = document.getElementById('kJumlah').value;
+    const satuan = document.getElementById('kSatuan').value;
+    const ambil = document.getElementById('kAmbil').value;
+
+    if(!tgl) tgl = new Date().toISOString().split('T')[0]; // default hari ini
+    if(!jumlah) return alert('Lengkapi semua field!');
+    if(jumlah > stok(barang)) return alert('Stok tidak cukup');
+    data.push({tipe:'Keluar', tanggal:tgl, barang, jumlah:+jumlah, satuan, ambil});
+    localStorage.setItem('inv', JSON.stringify(data));
+    updateDashboard();
+  };
+
+  window.hapusData = function(i) {
+    if(confirm('Hapus data?')) {
+      data.splice(i,1);
+      localStorage.setItem('inv', JSON.stringify(data));
+      updateDashboard();
+    }
   }
 
   function updateDashboard() {
@@ -245,14 +257,6 @@ window.onload = function() {
       </tr>`;
     });
     document.getElementById('tabel').innerHTML = tabelHtml;
-  }
-
-  window.hapusData = function(i) {
-    if(confirm('Hapus data?')) {
-      data.splice(i,1);
-      localStorage.setItem('inv', JSON.stringify(data));
-      updateDashboard();
-    }
   }
 
   window.downloadExcel = function() {
