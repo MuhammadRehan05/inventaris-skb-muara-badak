@@ -9,7 +9,7 @@
 <style>
 body{font-family:Arial;margin:0;background:#f1f5f9}
 .hidden{display:none}
-header{background:#1e40af;color:#fff;padding:12px;display:flex;align-items:center}
+header{background:#1e40af;color:#fff;padding:12px;display:flex;align-items:center;justify-content:space-between}
 header img{height:45px;margin-right:15px}
 .container{padding:20px}
 .card{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,.1)}
@@ -25,6 +25,7 @@ button{cursor:pointer;border:none;border-radius:6px}
 #loginBox{max-width:420px;margin:40px auto;background:#fff;padding:30px;border-radius:12px;text-align:center}
 #loginBox img{height:80px}
 #loginInfo{margin-top:10px;text-align:left;font-size:14px;background:#f0f0f0;padding:10px;border-radius:8px}
+.logoutBtn{background:#f59e0b;color:white;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </style>
 </head>
 
@@ -51,8 +52,11 @@ button{cursor:pointer;border:none;border-radius:6px}
 <div id="app" class="hidden">
 
 <header>
+<div style="display:flex;align-items:center;">
 <img src="logo.png" alt="Logo">
 <h3>Dashboard Inventaris</h3>
+</div>
+<button class="logoutBtn" onclick="logout()">Logout</button>
 </header>
 
 <div class="container">
@@ -158,11 +162,20 @@ const akun = [
 let data = JSON.parse(localStorage.getItem('inv')) || [];
 
 function login(){
-  let a = akun.find(x => x.u === user.value && x.p === pass.value);
+  const username = document.getElementById('user');
+  const password = document.getElementById('pass');
+  let a = akun.find(x => x.u === username.value && x.p === password.value);
   if(!a) return alert('Login gagal');
-  loginBox.style.display = 'none'; 
-  app.classList.remove('hidden'); 
+  document.getElementById('loginBox').style.display = 'none'; 
+  document.getElementById('app').classList.remove('hidden'); 
   update();
+}
+
+function logout(){
+  document.getElementById('loginBox').style.display = 'block';
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('user').value = '';
+  document.getElementById('pass').value = '';
 }
 
 function show(id){
@@ -180,6 +193,7 @@ function stok(b){
 }
 
 function masuk(){
+  if(!mTanggal.value || !mBarang.value || !mJumlah.value) return alert('Lengkapi semua field!');
   data.push({
     tipe:'Masuk',
     tanggal:mTanggal.value,
@@ -194,6 +208,7 @@ function masuk(){
 
 function keluarBarang(){
   let b=kBarang.value;
+  if(!kTanggal.value || !kJumlah.value) return alert('Lengkapi semua field!');
   if(kJumlah.value>stok(b)) return alert('Stok tidak cukup');
   data.push({
     tipe:'Keluar',
