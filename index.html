@@ -57,7 +57,6 @@ button{cursor:pointer;border:none;border-radius:6px}
 <!-- BARANG MASUK -->
 <div class="card hidden" id="masuk">
 <h3>Barang Masuk</h3>
-<input type="date" id="mTanggal">
 <input id="mBarang" placeholder="Nama Barang">
 <select id="mJenis">
 <option>Barang Modal</option>
@@ -83,7 +82,6 @@ button{cursor:pointer;border:none;border-radius:6px}
 <!-- BARANG KELUAR -->
 <div class="card hidden" id="keluar">
 <h3>Barang Keluar</h3>
-<input type="date" id="kTanggal">
 <select id="kBarang"></select>
 <input type="number" id="kJumlah" placeholder="Jumlah">
 <select id="kSatuan">
@@ -139,8 +137,6 @@ button{cursor:pointer;border:none;border-radius:6px}
 <select id="fDanaDownload">
 <option value="">Semua Dana</option>
 </select>
-<input type="date" id="fAwal">
-<input type="date" id="fAkhir">
 <button class="primary" onclick="downloadExcelFiles()">Download Excel Terpisah</button>
 </div>
 
@@ -149,149 +145,140 @@ button{cursor:pointer;border:none;border-radius:6px}
 
 <script>
 window.onload=function(){
-  const akun=[{u:'admin',p:'123'},{u:'operator',p:'123'},{u:'rehan',p:'456'}];
-  let data=JSON.parse(localStorage.getItem('inv'))||[];
-  const masuk=document.getElementById('masuk');
-  const keluar=document.getElementById('keluar');
+const akun=[{u:'admin',p:'123'},{u:'operator',p:'123'},{u:'rehan',p:'456'}];
+let data=JSON.parse(localStorage.getItem('inv'))||[];
+const masuk=document.getElementById('masuk');
+const keluar=document.getElementById('keluar');
 
-  const loginBtn=document.getElementById('loginBtn');
-  const logoutBtn=document.getElementById('logoutBtn');
+document.getElementById('loginBtn').onclick=function(){
+const u=document.getElementById('user').value;
+const p=document.getElementById('pass').value;
+if(!akun.find(a=>a.u===u && a.p===p)) return alert('Login gagal');
+document.getElementById('loginBox').style.display='none';
+document.getElementById('app').classList.remove('hidden');
+updateDashboard();
+updateDownloadOptions();
+}
 
-  loginBtn.onclick=function(){
-    const u=document.getElementById('user').value;
-    const p=document.getElementById('pass').value;
-    if(!akun.find(a=>a.u===u && a.p===p)) return alert('Login gagal');
-    document.getElementById('loginBox').style.display='none';
-    document.getElementById('app').classList.remove('hidden');
-    updateDashboard();
-    updateDownloadOptions();
-  }
+document.getElementById('logoutBtn').onclick=function(){
+document.getElementById('loginBox').style.display='block';
+document.getElementById('app').classList.add('hidden');
+document.getElementById('user').value='';
+document.getElementById('pass').value='';
+}
 
-  logoutBtn.onclick=function(){
-    document.getElementById('loginBox').style.display='block';
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('user').value='';
-    document.getElementById('pass').value='';
-  }
+window.show=function(id){
+masuk.classList.add('hidden'); keluar.classList.add('hidden');
+document.getElementById(id).classList.remove('hidden');
+}
 
-  window.show=function(id){
-    masuk.classList.add('hidden'); keluar.classList.add('hidden');
-    document.getElementById(id).classList.remove('hidden');
-  }
+function stok(barang){
+let masukTotal=0,keluarTotal=0;
+data.forEach(d=>{
+if(d.barang===barang && d.tipe==='Masuk') masukTotal+=d.jumlah;
+if(d.barang===barang && d.tipe==='Keluar') keluarTotal+=d.jumlah;
+});
+return masukTotal-keluarTotal;
+}
 
-  function stok(barang){
-    let masukTotal=0,keluarTotal=0;
-    data.forEach(d=>{
-      if(d.barang===barang && d.tipe==='Masuk') masukTotal+=d.jumlah;
-      if(d.barang===barang && d.tipe==='Keluar') keluarTotal+=d.jumlah;
-    });
-    return masukTotal-keluarTotal;
-  }
+function updateDropdownKeluar(){
+const kBarang=document.getElementById('kBarang');
+const kJenis=document.getElementById('kJenis');
+const kDana=document.getElementById('kDana');
+kBarang.innerHTML=''; kJenis.innerHTML=''; kDana.innerHTML='';
+const barangList=[...new Set(data.map(d=>d.barang))];
+const jenisList=[...new Set(data.map(d=>d.jenis))];
+const danaList=[...new Set(data.map(d=>d.dana))];
+barangList.forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
+jenisList.forEach(j=>kJenis.innerHTML+=`<option>${j}</option>`);
+danaList.forEach(d=>kDana.innerHTML+=`<option>${d}</option>`);
+}
 
-  function updateDropdownKeluar(){
-    const kBarang=document.getElementById('kBarang');
-    const kJenis=document.getElementById('kJenis');
-    const kDana=document.getElementById('kDana');
-    kBarang.innerHTML=''; kJenis.innerHTML=''; kDana.innerHTML='';
-    const masukBarang=[...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))];
-    const jenis=[...new Set(data.map(d=>d.jenis))];
-    const dana=[...new Set(data.map(d=>d.dana))];
-    masukBarang.forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
-    jenis.forEach(j=>kJenis.innerHTML+=`<option>${j}</option>`);
-    dana.forEach(d=>kDana.innerHTML+=`<option>${d}</option>`);
-  }
+function updateDownloadOptions(){
+const fJenis=document.getElementById('fJenisDownload');
+const fDana=document.getElementById('fDanaDownload');
+fJenis.innerHTML='<option value="">Semua Jenis</option>';
+fDana.innerHTML='<option value="">Semua Dana</option>';
+const jenisList=[...new Set(data.map(d=>d.jenis))];
+const danaList=[...new Set(data.map(d=>d.dana))];
+jenisList.forEach(j=>fJenis.innerHTML+=`<option value="${j}">${j}</option>`);
+danaList.forEach(d=>fDana.innerHTML+=`<option value="${d}">${d}</option>`);
+}
 
-  function updateDownloadOptions(){
-    const fJenis=document.getElementById('fJenisDownload');
-    const fDana=document.getElementById('fDanaDownload');
-    fJenis.innerHTML='<option value="">Semua Jenis</option>';
-    fDana.innerHTML='<option value="">Semua Dana</option>';
-    const jenis=[...new Set(data.map(d=>d.jenis))];
-    const dana=[...new Set(data.map(d=>d.dana))];
-    jenis.forEach(j=>fJenis.innerHTML+=`<option value="${j}">${j}</option>`);
-    dana.forEach(d=>fDana.innerHTML+=`<option value="${d}">${d}</option>`);
-  }
+window.masukBarang=function(){
+const b=document.getElementById('mBarang').value;
+const j=document.getElementById('mJenis').value;
+const d=document.getElementById('mDana').value;
+const q=document.getElementById('mJumlah').value;
+const s=document.getElementById('mSatuan').value;
+if(!b||!q||!j||!d) return alert('Lengkapi semua field!');
+data.push({tipe:'Masuk',barang:b,jumlah:+q,satuan:s,jenis:j,dana:d,pengambilan:''});
+localStorage.setItem('inv',JSON.stringify(data));
+updateDashboard();
+updateDownloadOptions();
+document.getElementById('mBarang').value='';document.getElementById('mJumlah').value='';
+}
 
-  window.masukBarang=function(){
-    let t=document.getElementById('mTanggal').value||new Date().toISOString().split('T')[0];
-    const b=document.getElementById('mBarang').value;
-    const j=document.getElementById('mJenis').value;
-    const d=document.getElementById('mDana').value;
-    const q=document.getElementById('mJumlah').value;
-    const s=document.getElementById('mSatuan').value;
-    if(!b||!q||!j||!d) return alert('Lengkapi semua field!');
-    data.push({tipe:'Masuk',tanggal:t,barang:b,jumlah:+q,satuan:s,jenis:j,dana:d,pengambilan:''});
-    localStorage.setItem('inv',JSON.stringify(data));
-    updateDashboard();
-    updateDownloadOptions();
-    document.getElementById('mBarang').value='';document.getElementById('mJumlah').value='';
-  }
+window.keluarBarang=function(){
+const b=document.getElementById('kBarang').value;
+const q=document.getElementById('kJumlah').value;
+const s=document.getElementById('kSatuan').value;
+const j=document.getElementById('kJenis').value;
+const d=document.getElementById('kDana').value;
+const p=document.getElementById('kAmbil').value;
+if(!q||!j||!d) return alert('Lengkapi semua field!');
+if(q>stok(b)) return alert('Stok tidak cukup');
+data.push({tipe:'Keluar',barang:b,jumlah:+q,satuan:s,jenis:j,dana:d,pengambilan:p});
+localStorage.setItem('inv',JSON.stringify(data));
+updateDashboard();
+updateDownloadOptions();
+document.getElementById('kJumlah').value='';
+}
 
-  window.keluarBarang=function(){
-    let t=document.getElementById('kTanggal').value||new Date().toISOString().split('T')[0];
-    const b=document.getElementById('kBarang').value;
-    const q=document.getElementById('kJumlah').value;
-    const s=document.getElementById('kSatuan').value;
-    const j=document.getElementById('kJenis').value;
-    const d=document.getElementById('kDana').value;
-    const p=document.getElementById('kAmbil').value;
-    if(!q||!j||!d) return alert('Lengkapi semua field!');
-    if(q>stok(b)) return alert('Stok tidak cukup');
-    data.push({tipe:'Keluar',tanggal:t,barang:b,jumlah:+q,satuan:s,jenis:j,dana:d,pengambilan:p});
-    localStorage.setItem('inv',JSON.stringify(data));
-    updateDashboard();
-    updateDownloadOptions();
-    document.getElementById('kJumlah').value='';
-  }
+window.hapusData=function(i){
+if(confirm('Hapus data?')){ data.splice(i,1); localStorage.setItem('inv',JSON.stringify(data)); updateDashboard(); updateDownloadOptions();}
+}
 
-  window.hapusData=function(i){
-    if(confirm('Hapus data?')){ data.splice(i,1); localStorage.setItem('inv',JSON.stringify(data)); updateDashboard(); updateDownloadOptions();}
-  }
+function updateDashboard(){
+updateDropdownKeluar();
+let r='<tr><th>Barang</th><th>Sisa</th></tr>';
+[...new Set(data.map(d=>d.barang))].forEach(b=>r+=`<tr><td>${b}</td><td>${stok(b)}</td></tr>`);
+document.getElementById('rekap').innerHTML=r;
 
-  function updateDashboard(){
-    updateDropdownKeluar();
-    let r='<tr><th>Barang</th><th>Sisa</th></tr>';
-    [...new Set(data.map(d=>d.barang))].forEach(b=>r+=`<tr><td>${b}</td><td>${stok(b)}</td></tr>`);
-    document.getElementById('rekap').innerHTML=r;
+let t='<tr><th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th><th>Satuan</th><th>Jenis</th><th>Dana</th><th>Pengambilan</th><th>Aksi</th></tr>';
+data.forEach((d,i)=>{
+t+=`<tr><td>${i+1}</td><td>${d.tipe}</td><td>${d.barang}</td><td>${d.jumlah}</td><td>${d.satuan}</td><td>${d.jenis}</td><td>${d.dana}</td><td>${d.pengambilan}</td><td><button class="danger" onclick="hapusData(${i})">Hapus</button></td></tr>`;
+});
+document.getElementById('tabel').innerHTML=t;
+}
 
-    let t='<tr><th>No</th><th>Tipe</th><th>Tanggal</th><th>Barang</th><th>Jumlah</th><th>Satuan</th><th>Jenis</th><th>Dana</th><th>Pengambilan</th><th>Aksi</th></tr>';
-    data.forEach((d,i)=>{
-      t+=`<tr><td>${i+1}</td><td>${d.tipe}</td><td>${d.tanggal}</td><td>${d.barang}</td><td>${d.jumlah}</td><td>${d.satuan}</td><td>${d.jenis}</td><td>${d.dana}</td><td>${d.pengambilan}</td><td><button class="danger" onclick="hapusData(${i})">Hapus</button></td></tr>`;
-    });
-    document.getElementById('tabel').innerHTML=t;
-  }
+window.downloadExcelFiles=function(){
+if(data.length===0) return alert('Data kosong');
+const tipeFilter=document.getElementById('fTipe').value;
+const jenisFilter=document.getElementById('fJenisDownload').value;
+const danaFilter=document.getElementById('fDanaDownload').value;
+const grouped={};
 
-  window.downloadExcelFiles=function(){
-    if(data.length===0) return alert('Data kosong');
-    const tipeFilter=document.getElementById('fTipe').value;
-    const jenisFilter=document.getElementById('fJenisDownload').value;
-    const danaFilter=document.getElementById('fDanaDownload').value;
-    const fAwal=document.getElementById('fAwal').value;
-    const fAkhir=document.getElementById('fAkhir').value;
-    const grouped={};
+data.forEach(d=>{
+if(tipeFilter && d.tipe!==tipeFilter) return;
+if(jenisFilter && d.jenis!==jenisFilter) return;
+if(danaFilter && d.dana!==danaFilter) return;
+const key=`${d.tipe}-${d.jenis}-${d.dana}`;
+if(!grouped[key]) grouped[key]=[];
+grouped[key].push(d);
+});
 
-    data.forEach(d=>{
-      if(tipeFilter && d.tipe!==tipeFilter) return;
-      if(jenisFilter && d.jenis!==jenisFilter) return;
-      if(danaFilter && d.dana!==danaFilter) return;
-      if(fAwal && d.tanggal<fAwal) return;
-      if(fAkhir && d.tanggal>fAkhir) return;
-      const key=`${d.tipe}-${d.jenis}-${d.dana}`;
-      if(!grouped[key]) grouped[key]=[];
-      grouped[key].push(d);
-    });
+for(const key in grouped){
+const wb=XLSX.utils.book_new();
+const ws=XLSX.utils.json_to_sheet(grouped[key]);
+XLSX.utils.book_append_sheet(wb,ws,'Data');
+const filename=key.replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx';
+XLSX.writeFile(wb,filename);
+}
+}
 
-    for(const key in grouped){
-      const wb=XLSX.utils.book_new();
-      const ws=XLSX.utils.json_to_sheet(grouped[key]);
-      XLSX.utils.book_append_sheet(wb,ws,'Data');
-      const filename=key.replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx';
-      XLSX.writeFile(wb,filename);
-    }
-  }
-
-  updateDashboard();
-  updateDownloadOptions();
+updateDashboard();
+updateDownloadOptions();
 }
 </script>
 </body>
