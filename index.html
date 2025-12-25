@@ -92,17 +92,8 @@ button{cursor:pointer;border:none;border-radius:6px}
 <option>set</option><option>lusin</option>
 <option>Botol</option><option>Paket</option><option>Unit</option><option>Meter</option>
 </select>
-<select id="kJenis">
-<option>Barang Modal</option>
-<option>BAJAS</option>
-</select>
-<select id="kDana">
-<option>BOSKAB 1</option>
-<option>BOSKAB 2</option>
-<option>BOP 1</option>
-<option>BOP 2</option>
-<option>Dana Lainnya</option>
-</select>
+<select id="kJenis"></select>
+<select id="kDana"></select>
 <select id="kAmbil">
 <option>Bu Munawarah. S.Pd</option>
 <option>Bu Liliana Sataria. S.Kom</option>
@@ -146,16 +137,16 @@ button{cursor:pointer;border:none;border-radius:6px}
 </div>
 
 <script>
-window.onload = function(){
-  const akun=[
-    {u:'admin',p:'123'},{u:'operator',p:'123'},{u:'rehan',p:'456'}
-  ];
-  let data = JSON.parse(localStorage.getItem('inv'))||[];
+window.onload=function(){
+  const akun=[{u:'admin',p:'123'},{u:'operator',p:'123'},{u:'rehan',p:'456'}];
+  let data=JSON.parse(localStorage.getItem('inv'))||[];
+  const masuk=document.getElementById('masuk');
+  const keluar=document.getElementById('keluar');
 
-  const masuk = document.getElementById('masuk');
-  const keluar = document.getElementById('keluar');
+  const loginBtn=document.getElementById('loginBtn');
+  const logoutBtn=document.getElementById('logoutBtn');
 
-  document.getElementById('loginBtn').onclick=function(){
+  loginBtn.onclick=function(){
     const u=document.getElementById('user').value;
     const p=document.getElementById('pass').value;
     if(!akun.find(a=>a.u===u && a.p===p)) return alert('Login gagal');
@@ -164,7 +155,7 @@ window.onload = function(){
     updateDashboard();
   }
 
-  document.getElementById('logoutBtn').onclick=function(){
+  logoutBtn.onclick=function(){
     document.getElementById('loginBox').style.display='block';
     document.getElementById('app').classList.add('hidden');
     document.getElementById('user').value='';
@@ -183,6 +174,21 @@ window.onload = function(){
       if(d.barang===barang && d.tipe==='Keluar') keluarTotal+=d.jumlah;
     });
     return masukTotal-keluarTotal;
+  }
+
+  function updateDropdownKeluar(){
+    const kBarang=document.getElementById('kBarang');
+    const kJenis=document.getElementById('kJenis');
+    const kDana=document.getElementById('kDana');
+    kBarang.innerHTML='';
+    kJenis.innerHTML='';
+    kDana.innerHTML='';
+    const masukBarang=[...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))];
+    const jenis=[...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.jenis))];
+    const dana=[...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.dana))];
+    masukBarang.forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
+    jenis.forEach(j=>kJenis.innerHTML+=`<option>${j}</option>`);
+    dana.forEach(d=>kDana.innerHTML+=`<option>${d}</option>`);
   }
 
   window.masukBarang=function(){
@@ -220,12 +226,7 @@ window.onload = function(){
   }
 
   function updateDashboard(){
-    const kBarang=document.getElementById('kBarang');
-    kBarang.innerHTML='';
-    [...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))].forEach(b=>{
-      kBarang.innerHTML+=`<option>${b}</option>`;
-    });
-
+    updateDropdownKeluar();
     let r='<tr><th>Barang</th><th>Sisa</th></tr>';
     [...new Set(data.map(d=>d.barang))].forEach(b=>r+=`<tr><td>${b}</td><td>${stok(b)}</td></tr>`);
     document.getElementById('rekap').innerHTML=r;
