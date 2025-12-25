@@ -22,7 +22,6 @@ button{cursor:pointer;border:none;border-radius:6px}
 .menu{display:flex;gap:10px;flex-wrap:wrap}
 #loginBox{max-width:420px;margin:40px auto;background:#fff;padding:30px;border-radius:12px;text-align:center}
 #loginBox img{height:80px}
-#loginInfo{margin-top:10px;text-align:left;font-size:14px;background:#f0f0f0;padding:10px;border-radius:8px}
 .logoutBtn{background:#f59e0b;color:white;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </style>
 </head>
@@ -35,14 +34,6 @@ button{cursor:pointer;border:none;border-radius:6px}
 <input id="user" placeholder="Username">
 <input id="pass" type="password" placeholder="Password">
 <button class="primary" id="loginBtn">Login</button>
-<div id="loginInfo">
-<strong>Username / Password Default:</strong>
-<ul>
-<li>admin / 123</li>
-<li>operator / 123</li>
-<li>rehan / 456</li>
-</ul>
-</div>
 </div>
 
 <!-- APP -->
@@ -148,12 +139,6 @@ button{cursor:pointer;border:none;border-radius:6px}
 <option>BOSKAB 1</option><option>BOSKAB 2</option>
 <option>BOP 1</option><option>BOP 2</option>
 <option>Dana Lainnya</option>
-</select>
-<select id="fSatuan">
-<option value="">Semua Satuan</option>
-<option>rim</option><option>buah</option><option>pcs</option>
-<option>pack</option><option>kotak</option><option>biji</option>
-<option>set</option><option>lusin</option>
 </select>
 <input type="date" id="fAwal">
 <input type="date" id="fAkhir">
@@ -276,7 +261,6 @@ window.onload = function() {
     const fTipe = document.getElementById('fTipe').value;
     const fJenis = document.getElementById('fJenis').value;
     const fDana = document.getElementById('fDana').value;
-    const fSatuan = document.getElementById('fSatuan').value;
     const fAwal = document.getElementById('fAwal').value;
     const fAkhir = document.getElementById('fAkhir').value;
 
@@ -284,11 +268,12 @@ window.onload = function() {
       if(fTipe && d.tipe !== fTipe) return false;
       if(fJenis && d.jenis!==fJenis) return false;
       if(fDana && d.dana!==fDana) return false;
-      if(fSatuan && d.satuan!==fSatuan) return false;
       if(fAwal && d.tanggal<fAwal) return false;
       if(fAkhir && d.tanggal>fAkhir) return false;
       return true;
     });
+
+    if(filtered.length === 0) return alert('Tidak ada data sesuai filter');
 
     const ws = XLSX.utils.json_to_sheet(filtered);
     const wb = XLSX.utils.book_new();
