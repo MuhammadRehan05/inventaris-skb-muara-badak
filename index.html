@@ -92,6 +92,17 @@ button{cursor:pointer;border:none;border-radius:6px}
 <option>set</option><option>lusin</option>
 <option>Botol</option><option>Paket</option><option>Unit</option><option>Meter</option>
 </select>
+<select id="kJenis">
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
+<select id="kDana">
+<option>BOSKAB 1</option>
+<option>BOSKAB 2</option>
+<option>BOP 1</option>
+<option>BOP 2</option>
+<option>Dana Lainnya</option>
+</select>
 <select id="kAmbil">
 <option>Bu Munawarah. S.Pd</option>
 <option>Bu Liliana Sataria. S.Kom</option>
@@ -208,9 +219,11 @@ window.onload = function() {
 
     if(!tgl) tgl = new Date().toISOString().split('T')[0]; 
     if(!barang || !jumlah) return alert('Lengkapi semua field!');
-    data.push({tipe:'Masuk', tanggal:tgl, barang, jenis, dana, jumlah:+jumlah, satuan});
+    data.push({tipe:'Masuk', tanggal:tgl, barang, jenis, dana, jumlah:+jumlah, satuan, pengambilan:''});
     localStorage.setItem('inv', JSON.stringify(data));
     updateDashboard();
+    document.getElementById('mBarang').value='';
+    document.getElementById('mJumlah').value='';
   };
 
   window.keluarBarang = function() {
@@ -218,14 +231,17 @@ window.onload = function() {
     const barang = document.getElementById('kBarang').value;
     const jumlah = document.getElementById('kJumlah').value;
     const satuan = document.getElementById('kSatuan').value;
+    const jenis = document.getElementById('kJenis').value;
+    const dana = document.getElementById('kDana').value;
     const ambil = document.getElementById('kAmbil').value;
 
     if(!tgl) tgl = new Date().toISOString().split('T')[0];
     if(!jumlah) return alert('Lengkapi semua field!');
     if(jumlah > stok(barang)) return alert('Stok tidak cukup');
-    data.push({tipe:'Keluar', tanggal:tgl, barang, jumlah:+jumlah, satuan, ambil});
+    data.push({tipe:'Keluar', tanggal:tgl, barang, jumlah:+jumlah, satuan, jenis, dana, pengambilan:ambil});
     localStorage.setItem('inv', JSON.stringify(data));
     updateDashboard();
+    document.getElementById('kJumlah').value='';
   };
 
   window.hapusData = function(i) {
@@ -248,11 +264,12 @@ window.onload = function() {
     });
     document.getElementById('rekap').innerHTML = rekapHtml;
 
-    let tabelHtml = '<tr><th>No</th><th>Tipe</th><th>Tanggal</th><th>Barang</th><th>Jumlah</th><th>Satuan</th><th>Aksi</th></tr>';
+    let tabelHtml = '<tr><th>No</th><th>Tipe</th><th>Tanggal</th><th>Barang</th><th>Jumlah</th><th>Satuan</th><th>Jenis</th><th>Dana</th><th>Pengambilan</th><th>Aksi</th></tr>';
     data.forEach((d,i)=>{
       tabelHtml += `<tr>
         <td>${i+1}</td><td>${d.tipe}</td><td>${d.tanggal}</td>
         <td>${d.barang}</td><td>${d.jumlah}</td><td>${d.satuan||''}</td>
+        <td>${d.jenis||''}</td><td>${d.dana||''}</td><td>${d.pengambilan||''}</td>
         <td><button class="danger" onclick="hapusData(${i})">Hapus</button></td>
       </tr>`;
     });
@@ -268,8 +285,8 @@ window.onload = function() {
 
     const filtered = data.filter(d=>{
       if(fTipe && d.tipe !== fTipe) return false;
-      if(fJenis && d.jenis && d.jenis !== fJenis) return false; // cek hanya jika ada properti jenis
-      if(fDana && d.dana && d.dana !== fDana) return false;   // cek hanya jika ada properti dana
+      if(fJenis && d.jenis !== undefined && d.jenis !== fJenis) return false;
+      if(fDana && d.dana !== undefined && d.dana !== fDana) return false;
       if(fAwal && d.tanggal < fAwal) return false;
       if(fAkhir && d.tanggal > fAkhir) return false;
       return true;
