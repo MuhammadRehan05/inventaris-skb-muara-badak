@@ -8,18 +8,18 @@
 <style>
 body{font-family:Segoe UI,Arial;background:#f1f5f9;margin:0}
 .hidden{display:none}
-header{background:#1e40af;color:#fff;padding:15px;display:flex;align-items:center;gap:15px}
+header{background:#1e40af;color:white;padding:15px;display:flex;align-items:center;gap:15px}
 header img{height:50px}
-.card{background:#fff;margin:20px;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.card{background:white;margin:20px;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.menu{display:flex;gap:10px;flex-wrap:wrap}
 input,select,button{padding:10px;margin:6px 0;width:100%}
 button{border:none;border-radius:8px;font-weight:bold;cursor:pointer}
-.primary{background:#2563eb;color:#fff}
-.success{background:#16a34a;color:#fff}
-.warn{background:#f59e0b;color:#fff}
+.primary{background:#2563eb;color:white}
+.success{background:#16a34a;color:white}
+.warn{background:#f59e0b;color:white}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
 th{background:#e5e7eb}
-.menu{display:flex;gap:10px;flex-wrap:wrap}
 </style>
 </head>
 
@@ -55,9 +55,9 @@ th{background:#e5e7eb}
 <input id="mBarang" placeholder="Nama Barang">
 
 <select id="mJenis">
-<option value="">-- Pilih Jenis Barang --</option>
-<option value="Barang Modal">Barang Modal</option>
-<option value="BAJAS">BAJAS</option>
+<option value="">-- Pilih Jenis --</option>
+<option>Barang Modal</option>
+<option>BAJAS</option>
 </select>
 
 <select id="mSatuan">
@@ -67,14 +67,14 @@ th{background:#e5e7eb}
 </select>
 
 <select id="mDana">
-<option value="">-- Pilih Sumber Dana --</option>
+<option value="">-- Pilih Dana --</option>
 <option>BOSKAB 1</option><option>BOSKAB 2</option>
 <option>BOP 1</option><option>BOP 2</option>
 <option>Dana Lainnya</option>
 </select>
 
 <input type="number" id="mJumlah" placeholder="Jumlah">
-<button class="success" onclick="simpanMasuk()">Simpan Barang Masuk</button>
+<button class="success" onclick="simpanMasuk()">Simpan</button>
 </div>
 
 <!-- BARANG KELUAR -->
@@ -104,30 +104,48 @@ th{background:#e5e7eb}
 <option>Bu Rusdiana. S.Pd</option>
 </select>
 
-<button class="warn" onclick="simpanKeluar()">Simpan Barang Keluar</button>
+<button class="warn" onclick="simpanKeluar()">Simpan</button>
 </div>
 
-<!-- REKAP -->
+<!-- REKAP & DOWNLOAD -->
 <div id="rekap" class="card hidden">
 <h3>📊 Rekap Stok Per Barang</h3>
 
 <table>
 <thead>
 <tr>
-<th>Barang</th>
-<th>Jenis</th>
-<th>Satuan</th>
-<th>Masuk</th>
-<th>Keluar</th>
-<th>Sisa</th>
+<th>Barang</th><th>Jenis</th><th>Satuan</th>
+<th>Masuk</th><th>Keluar</th><th>Sisa</th>
 </tr>
 </thead>
-<tbody id="tblBarang"></tbody>
+<tbody id="tblRekap"></tbody>
 </table>
 
-<br>
-<button class="primary" onclick="exportExcel()">📥 Download Excel (.xlsx)</button>
-<button class="warn" onclick="backup()">💾 Backup Data</button>
+<hr>
+
+<h3>📥 Download Data (Filter)</h3>
+
+<select id="fJenis">
+<option value="">Semua Jenis</option>
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
+
+<select id="fDana">
+<option value="">Semua Dana</option>
+<option>BOSKAB 1</option><option>BOSKAB 2</option>
+<option>BOP 1</option><option>BOP 2</option>
+<option>Dana Lainnya</option>
+</select>
+
+<label>Tanggal Awal</label>
+<input type="date" id="fAwal">
+
+<label>Tanggal Akhir</label>
+<input type="date" id="fAkhir">
+
+<button class="primary" onclick="exportExcel()">📥 Download Excel</button>
+<button class="warn" onclick="backup()">💾 Backup</button>
 <input type="file" onchange="restore(event)">
 </div>
 
@@ -135,7 +153,7 @@ th{background:#e5e7eb}
 
 <script>
 const USERS={admin:'12345',operator:'123'};
-let data=JSON.parse(localStorage.getItem('inventaris_skb'))||[];
+let data=JSON.parse(localStorage.getItem('inv_skb'))||[];
 
 function login(){
 if(USERS[user.value]===pass.value){
@@ -167,9 +185,9 @@ tipe:'Masuk'
 save();
 }
 
-function stok(barang){
+function stok(b){
 let m=0,k=0;
-data.filter(d=>d.barang===barang).forEach(d=>{
+data.filter(d=>d.barang===b).forEach(d=>{
 d.tipe==='Masuk'?m+=d.jumlah:k+=d.jumlah;
 });
 return m-k;
@@ -178,7 +196,6 @@ return m-k;
 function simpanKeluar(){
 let barang=kBarang.value;
 if(kJumlah.value>stok(barang)) return alert('Stok tidak cukup');
-
 let ref=data.find(d=>d.barang===barang && d.tipe==='Masuk');
 
 data.push({
@@ -186,6 +203,7 @@ tanggal:kTanggal.value,
 barang:barang,
 jenis:ref.jenis,
 satuan:ref.satuan,
+dana:ref.dana,
 jumlah:+kJumlah.value,
 pengambil:kPengambil.value,
 tipe:'Keluar'
@@ -194,7 +212,7 @@ save();
 }
 
 function save(){
-localStorage.setItem('inventaris_skb',JSON.stringify(data));
+localStorage.setItem('inv_skb',JSON.stringify(data));
 refreshBarang();
 }
 
@@ -206,26 +224,32 @@ kBarang.innerHTML='<option value="">-- Pilih Barang --</option>';
 
 function rekap(){
 let map={};
-tblBarang.innerHTML='';
+tblRekap.innerHTML='';
 data.forEach(d=>{
 if(!map[d.barang]) map[d.barang]={barang:d.barang,jenis:d.jenis,satuan:d.satuan,masuk:0,keluar:0};
 d.tipe==='Masuk'?map[d.barang].masuk+=d.jumlah:map[d.barang].keluar+=d.jumlah;
 });
 Object.values(map).forEach(r=>{
-tblBarang.innerHTML+=`
+tblRekap.innerHTML+=`
 <tr>
-<td>${r.barang}</td>
-<td>${r.jenis}</td>
-<td>${r.satuan}</td>
-<td>${r.masuk}</td>
-<td>${r.keluar}</td>
-<td><b>${r.masuk-r.keluar}</b></td>
+<td>${r.barang}</td><td>${r.jenis}</td><td>${r.satuan}</td>
+<td>${r.masuk}</td><td>${r.keluar}</td><td><b>${r.masuk-r.keluar}</b></td>
 </tr>`;
 });
 }
 
 function exportExcel(){
-let ws=XLSX.utils.json_to_sheet(data);
+let jenis=fJenis.value,dana=fDana.value,awal=fAwal.value,akhir=fAkhir.value;
+let hasil=data.filter(d=>{
+if(jenis && d.jenis!==jenis) return false;
+if(dana && d.dana!==dana) return false;
+if(awal && d.tanggal<awal) return false;
+if(akhir && d.tanggal>akhir) return false;
+return true;
+});
+if(!hasil.length) return alert('Data tidak ditemukan');
+
+let ws=XLSX.utils.json_to_sheet(hasil);
 let wb=XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,'Inventaris');
 XLSX.writeFile(wb,'Inventaris_SKB_Muara_Badak.xlsx');
