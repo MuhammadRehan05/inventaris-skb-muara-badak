@@ -197,10 +197,11 @@ danaList.forEach(d=>kDana.innerHTML+=`<option>${d}</option>`);
 function updateDownloadOptions(){
 const fJenis=document.getElementById('fJenisDownload');
 const fDana=document.getElementById('fDanaDownload');
+const tipeFilter=document.getElementById('fTipe').value;
+let jenisList = [...new Set(data.filter(d=>!tipeFilter||d.tipe===tipeFilter).map(d=>d.jenis))];
+let danaList = [...new Set(data.filter(d=>!tipeFilter||d.tipe===tipeFilter).map(d=>d.dana))];
 fJenis.innerHTML='<option value="">Semua Jenis</option>';
 fDana.innerHTML='<option value="">Semua Dana</option>';
-const jenisList=[...new Set(data.map(d=>d.jenis))];
-const danaList=[...new Set(data.map(d=>d.dana))];
 jenisList.forEach(j=>fJenis.innerHTML+=`<option value="${j}">${j}</option>`);
 danaList.forEach(d=>fDana.innerHTML+=`<option value="${d}">${d}</option>`);
 }
@@ -268,6 +269,8 @@ const wb=XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,'Inventaris');
 XLSX.writeFile(wb,'Inventaris_Filtered.xlsx');
 }
+
+document.getElementById('fTipe').onchange=updateDownloadOptions;
 
 updateDashboard();
 updateDownloadOptions();
