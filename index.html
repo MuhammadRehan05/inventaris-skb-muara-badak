@@ -270,7 +270,7 @@ grouped[key].push(d);
 
 for(const key in grouped){
 const wb=XLSX.utils.book_new();
-const ws=XLSX.utils.json_to_sheet(grouped[key]);
+const ws=XLSX.utils.json_to_sheet(grouped[key], {header:["tipe","barang","jumlah","satuan","jenis","dana","pengambilan"]});
 XLSX.utils.book_append_sheet(wb,ws,'Data');
 const filename=key.replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx';
 XLSX.writeFile(wb,filename);
