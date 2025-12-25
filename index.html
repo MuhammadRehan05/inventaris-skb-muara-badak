@@ -7,24 +7,21 @@
 <style>
 body{font-family:Arial;margin:0;background:#f1f5f9}
 .hidden{display:none}
-header{background:#1e40af;color:white;padding:15px;display:flex;align-items:center}
+header{background:#1e40af;color:#fff;padding:15px;display:flex;align-items:center}
+header img{height:45px;margin-right:15px}
 .container{padding:20px}
-.menu{display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap}
-.menu button{padding:12px 18px;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
-.masuk{background:#2563eb;color:white}
-.keluar{background:#dc2626;color:white}
-.card{background:white;padding:20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.1);margin-bottom:20px}
-input,select,textarea{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
-button.simpan{background:#16a34a;color:white;border:none;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer}
-table{width:100%;border-collapse:collapse;margin-top:15px}
+.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.1);margin-bottom:20px}
+.menu{display:flex;gap:15px;flex-wrap:wrap;margin-bottom:20px}
+button{padding:10px 15px;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
+.masuk{background:#2563eb;color:#fff}
+.keluar{background:#dc2626;color:#fff}
+.simpan{background:#16a34a;color:#fff}
+input,select,textarea{width:100%;padding:8px;margin:6px 0;border-radius:6px;border:1px solid #ccc}
+table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
 th{background:#e5e7eb}
-
-/* LOGIN */
-#loginBox{
-max-width:420px;margin:90px auto;background:white;padding:30px;
-border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center
-}
+#loginBox{max-width:420px;margin:90px auto;background:white;padding:30px;border-radius:12px;text-align:center}
+#loginBox img{height:80px}
 </style>
 </head>
 
@@ -32,41 +29,22 @@ border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center
 
 <!-- LOGIN -->
 <div id="loginBox">
-<h2>Login Inventaris</h2>
+<img src="logo.png">
+<h3>Login Inventaris</h3>
 <input id="user" placeholder="Username">
 <input id="pass" type="password" placeholder="Password">
 <button class="simpan" onclick="login()">Masuk</button>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
-
 <header>
-<h2>Dashboard Inventaris SKB Muara Badak</h2>
-<div style="margin-left:auto" id="userInfo"></div>
+<img src="logo.png">
+<h2>Inventaris SKB Muara Badak</h2>
 </header>
 
 <div class="container">
 
-<!-- PILIH SUMBER DANA -->
-<div class="card">
-<h3>💰 Sumber Dana</h3>
-<select id="danaSelect">
-<option value="BOSKAB1">Dana BOSKAB 1</option>
-<option value="BOSKAB2">Dana BOSKAB 2</option>
-<option value="BOP1">Dana BOP 1</option>
-<option value="BOP2">Dana BOP 2</option>
-<option value="LAIN">Dana Lainnya</option>
-</select>
-</div>
-
-<!-- RINGKASAN -->
-<div class="menu">
-<div class="card"><h3>Total Masuk</h3><h1 id="totalMasuk">0</h1></div>
-<div class="card"><h3>Total Keluar</h3><h1 id="totalKeluar">0</h1></div>
-<div class="card"><h3>Stok Total</h3><h1 id="stok">0</h1></div>
-</div>
-
+<!-- MENU -->
 <div class="menu">
 <button class="masuk" onclick="showForm('masuk')">➕ Barang Masuk</button>
 <button class="keluar" onclick="showForm('keluar')">➖ Barang Keluar</button>
@@ -74,197 +52,162 @@ border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center
 
 <!-- FORM MASUK -->
 <div class="card hidden" id="formMasuk">
-<h3>📥 Barang Masuk</h3>
-<input type="date" id="tanggal">
+<h3>Barang Masuk</h3>
+<input type="date" id="mTgl">
 <input id="mNama" placeholder="Nama Barang">
-<input id="mJumlah" type="number" placeholder="Jumlah">
+<input type="number" id="mJumlah" placeholder="Jumlah">
+<select id="mDana">
+<option>BOSKAB 1</option>
+<option>BOSKAB 2</option>
+<option>BOP 1</option>
+<option>BOP 2</option>
+<option>Dana Lainnya</option>
+</select>
 <textarea id="mKet" placeholder="Keterangan"></textarea>
 <button class="simpan" onclick="simpanMasuk()">Simpan</button>
 </div>
 
 <!-- FORM KELUAR -->
 <div class="card hidden" id="formKeluar">
-<h3>📤 Barang Keluar</h3>
-<input type="date" id="tanggalK">
+<h3>Barang Keluar</h3>
+<input type="date" id="kTgl">
 <input id="kNama" placeholder="Nama Barang">
-<input id="kJumlah" type="number" placeholder="Jumlah">
-<select id="kAmbil">
-<option value="">-- Diambil Oleh --</option>
-<option>Bu Munawarah</option>
-<option>Bu Liliana</option>
-<option>Pak Jemidin</option>
-<option>Pak Rehan</option>
+<input type="number" id="kJumlah" placeholder="Jumlah">
+<select id="kDana">
+<option>BOSKAB 1</option>
+<option>BOSKAB 2</option>
+<option>BOP 1</option>
+<option>BOP 2</option>
+<option>Dana Lainnya</option>
 </select>
 <textarea id="kKet" placeholder="Keterangan"></textarea>
 <button class="simpan" onclick="simpanKeluar()">Simpan</button>
 </div>
 
-<!-- DATA TRANSAKSI -->
+<!-- DATA -->
 <div class="card">
-<h3>📊 Data Inventaris</h3>
+<h3>Data Inventaris</h3>
 <table>
 <thead>
 <tr>
-<th>No</th><th>Tanggal</th><th>Barang</th>
-<th>Jenis</th><th>Jumlah</th><th>Sumber Dana</th><th>Keterangan</th>
+<th>Tanggal</th><th>Barang</th><th>Jenis</th>
+<th>Jumlah</th><th>Sisa</th><th>Dana</th><th>Keterangan</th>
 </tr>
 </thead>
 <tbody id="tabel"></tbody>
 </table>
 </div>
 
-<!-- SISA BARANG PER BARANG -->
+<!-- STOK -->
 <div class="card">
-<h3>📦 Sisa Barang Per Barang</h3>
+<h3>Sisa Barang per Barang</h3>
 <table>
-<thead>
-<tr>
-<th>Nama Barang</th>
-<th>Total Masuk</th>
-<th>Total Keluar</th>
-<th>Sisa</th>
-</tr>
-</thead>
+<thead><tr><th>Barang</th><th>Masuk</th><th>Keluar</th><th>Sisa</th></tr></thead>
 <tbody id="stokBarang"></tbody>
 </table>
 </div>
 
-<button class="simpan" onclick="exportExcel()">📥 Export Excel</button>
+<!-- DOWNLOAD -->
+<div class="card">
+<h3>Download Laporan</h3>
+<select id="filterDana">
+<option>BOSKAB 1</option>
+<option>BOSKAB 2</option>
+<option>BOP 1</option>
+<option>BOP 2</option>
+<option>Dana Lainnya</option>
+</select>
+<label>Dari</label>
+<input type="date" id="tglAwal">
+<label>Sampai</label>
+<input type="date" id="tglAkhir">
+<button class="simpan" onclick="downloadCSV()">Download CSV</button>
+</div>
 
 </div>
 </div>
 
 <script>
-/* MULTI USER */
-const USERS=[
-{user:'admin',pass:'12345',role:'Admin'},
-{user:'operator',pass:'12345',role:'Operator'},
-{user:'viewer',pass:'12345',role:'Viewer'}
-];
-
-let currentUser=null;
-let data=[];
-
-function getKey(){
- return 'inventaris_'+danaSelect.value;
-}
+const USERS={admin:'12345',operator:'12345'};
+let data=JSON.parse(localStorage.getItem('inventaris'))||[];
 
 function login(){
- let u=USERS.find(x=>x.user===user.value && x.pass===pass.value);
- if(!u) return alert('Login gagal');
- currentUser=u;
- loginBox.style.display='none';
- app.classList.remove('hidden');
- userInfo.innerText=u.user+' ('+u.role+')';
- loadData();
+if(USERS[user.value]===pass.value){
+loginBox.style.display='none';
+app.classList.remove('hidden');
+tampil();
+}else alert('Login salah');
 }
 
-function loadData(){
- data=JSON.parse(localStorage.getItem(getKey()))||[];
- tampil();
-}
-danaSelect.onchange=loadData;
-
-function showForm(j){
- formMasuk.classList.add('hidden');
- formKeluar.classList.add('hidden');
- if(j==='masuk') formMasuk.classList.remove('hidden');
- if(j==='keluar') formKeluar.classList.remove('hidden');
+function showForm(f){
+formMasuk.classList.add('hidden');
+formKeluar.classList.add('hidden');
+if(f==='masuk')formMasuk.classList.remove('hidden');
+if(f==='keluar')formKeluar.classList.remove('hidden');
 }
 
 function simpanMasuk(){
- if(!tanggal.value||!mNama.value||mJumlah.value<=0)
-  return alert('Data belum lengkap');
-
- data.push({
-  tanggal:tanggal.value,
-  barang:mNama.value,
-  jenis:'Masuk',
-  jumlah:+mJumlah.value,
-  dana:danaSelect.value,
-  ket:mKet.value
- });
- simpan();
+data.push({
+tanggal:mTgl.value,
+barang:mNama.value,
+jenis:'Masuk',
+jumlah:+mJumlah.value,
+dana:mDana.value,
+ket:mKet.value
+});
+simpan();
 }
 
 function simpanKeluar(){
- if(!tanggalK.value||!kNama.value||kJumlah.value<=0||!kAmbil.value)
-  return alert('Data belum lengkap');
-
- let stok=0;
- data.forEach(d=>{
-  if(d.barang===kNama.value){
-   if(d.jenis==='Masuk') stok+=d.jumlah;
-   if(d.jenis==='Keluar') stok-=d.jumlah;
-  }
- });
- if(kJumlah.value>stok) return alert('Stok tidak mencukupi');
-
- data.push({
-  tanggal:tanggalK.value,
-  barang:kNama.value,
-  jenis:'Keluar',
-  jumlah:+kJumlah.value,
-  dana:danaSelect.value,
-  ket:'Diambil oleh '+kAmbil.value+' | '+kKet.value
- });
- simpan();
+data.push({
+tanggal:kTgl.value,
+barang:kNama.value,
+jenis:'Keluar',
+jumlah:+kJumlah.value,
+dana:kDana.value,
+ket:kKet.value
+});
+simpan();
 }
 
 function simpan(){
- localStorage.setItem(getKey(),JSON.stringify(data));
- tampil();
+localStorage.setItem('inventaris',JSON.stringify(data));
+tampil();
 }
 
 function tampil(){
- let html='', m=0, k=0;
- let stokMap={};
+let stok={},html='';
+data.forEach(d=>{
+if(!stok[d.barang])stok[d.barang]={m:0,k:0};
+d.jenis==='Masuk'?stok[d.barang].m+=d.jumlah:stok[d.barang].k+=d.jumlah;
+let sisa=stok[d.barang].m-stok[d.barang].k;
+html+=`<tr><td>${d.tanggal}</td><td>${d.barang}</td><td>${d.jenis}</td><td>${d.jumlah}</td><td>${sisa}</td><td>${d.dana}</td><td>${d.ket}</td></tr>`;
+});
+tabel.innerHTML=html;
 
- data.forEach((d,i)=>{
-  html+=`
-  <tr>
-   <td>${i+1}</td>
-   <td>${new Date(d.tanggal).toLocaleDateString('id-ID')}</td>
-   <td>${d.barang}</td>
-   <td>${d.jenis}</td>
-   <td>${d.jumlah}</td>
-   <td>${danaSelect.options[danaSelect.selectedIndex].text}</td>
-   <td>${d.ket}</td>
-  </tr>`;
-
-  if(!stokMap[d.barang]) stokMap[d.barang]={masuk:0,keluar:0};
-
-  if(d.jenis==='Masuk'){ m+=d.jumlah; stokMap[d.barang].masuk+=d.jumlah; }
-  if(d.jenis==='Keluar'){ k+=d.jumlah; stokMap[d.barang].keluar+=d.jumlah; }
- });
-
- tabel.innerHTML=html;
- totalMasuk.innerText=m;
- totalKeluar.innerText=k;
- stok.innerText=m-k;
-
- let sb='';
- for(let b in stokMap){
-  sb+=`
-  <tr>
-   <td>${b}</td>
-   <td>${stokMap[b].masuk}</td>
-   <td>${stokMap[b].keluar}</td>
-   <td>${stokMap[b].masuk-stokMap[b].keluar}</td>
-  </tr>`;
- }
- stokBarang.innerHTML=sb;
+let sb='';
+for(let b in stok){
+sb+=`<tr><td>${b}</td><td>${stok[b].m}</td><td>${stok[b].k}</td><td>${stok[b].m-stok[b].k}</td></tr>`;
+}
+stokBarang.innerHTML=sb;
 }
 
-function exportExcel(){
- let csv='No,Tanggal,Barang,Jenis,Jumlah,Sumber Dana,Keterangan\n';
- data.forEach((d,i)=>{
-  csv+=`${i+1},${d.tanggal},${d.barang},${d.jenis},${d.jumlah},${danaSelect.value},"${d.ket}"\n`;
- });
- let a=document.createElement('a');
- a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
- a.download='Inventaris_'+danaSelect.value+'.csv';
- a.click();
+function downloadCSV(){
+let hasil=data.filter(d=>{
+return d.dana===filterDana.value &&
+(!tglAwal.value||d.tanggal>=tglAwal.value)&&
+(!tglAkhir.value||d.tanggal<=tglAkhir.value);
+});
+if(!hasil.length)return alert('Data kosong');
+
+let csv='Tanggal,Barang,Jenis,Jumlah,Dana,Keterangan\n';
+hasil.forEach(d=>csv+=`${d.tanggal},${d.barang},${d.jenis},${d.jumlah},${d.dana},"${d.ket}"\n`);
+
+let a=document.createElement('a');
+let now=new Date().toISOString().slice(0,10);
+a.href=URL.createObjectURL(new Blob([csv]));
+a.download=`Inventaris_${filterDana.value}_${now}.csv`;
+a.click();
 }
 </script>
 
