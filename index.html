@@ -44,18 +44,24 @@ th{background:#e5e7eb}
 
 <div class="container">
 
-<!-- MENU -->
 <div class="menu">
 <button class="masuk" onclick="showForm('masuk')">➕ Barang Masuk</button>
 <button class="keluar" onclick="showForm('keluar')">➖ Barang Keluar</button>
 </div>
 
-<!-- FORM MASUK -->
+<!-- BARANG MASUK -->
 <div class="card hidden" id="formMasuk">
 <h3>Barang Masuk</h3>
 <input type="date" id="mTgl">
+
+<select id="mJenisBarang">
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
+
 <input id="mNama" placeholder="Nama Barang">
 <input type="number" id="mJumlah" placeholder="Jumlah">
+
 <select id="mDana">
 <option>BOSKAB 1</option>
 <option>BOSKAB 2</option>
@@ -63,16 +69,24 @@ th{background:#e5e7eb}
 <option>BOP 2</option>
 <option>Dana Lainnya</option>
 </select>
+
 <textarea id="mKet" placeholder="Keterangan"></textarea>
 <button class="simpan" onclick="simpanMasuk()">Simpan</button>
 </div>
 
-<!-- FORM KELUAR -->
+<!-- BARANG KELUAR -->
 <div class="card hidden" id="formKeluar">
 <h3>Barang Keluar</h3>
 <input type="date" id="kTgl">
+
+<select id="kJenisBarang">
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
+
 <input id="kNama" placeholder="Nama Barang">
 <input type="number" id="kJumlah" placeholder="Jumlah">
+
 <select id="kDana">
 <option>BOSKAB 1</option>
 <option>BOSKAB 2</option>
@@ -80,6 +94,7 @@ th{background:#e5e7eb}
 <option>BOP 2</option>
 <option>Dana Lainnya</option>
 </select>
+
 <textarea id="kKet" placeholder="Keterangan"></textarea>
 <button class="simpan" onclick="simpanKeluar()">Simpan</button>
 </div>
@@ -90,8 +105,9 @@ th{background:#e5e7eb}
 <table>
 <thead>
 <tr>
-<th>Tanggal</th><th>Barang</th><th>Jenis</th>
-<th>Jumlah</th><th>Sisa</th><th>Dana</th><th>Keterangan</th>
+<th>Tanggal</th><th>Barang</th><th>Jenis Barang</th>
+<th>Masuk/Keluar</th><th>Jumlah</th><th>Sisa</th>
+<th>Sumber Dana</th><th>Keterangan</th>
 </tr>
 </thead>
 <tbody id="tabel"></tbody>
@@ -102,7 +118,9 @@ th{background:#e5e7eb}
 <div class="card">
 <h3>Sisa Barang per Barang</h3>
 <table>
-<thead><tr><th>Barang</th><th>Masuk</th><th>Keluar</th><th>Sisa</th></tr></thead>
+<thead>
+<tr><th>Barang</th><th>Jenis</th><th>Masuk</th><th>Keluar</th><th>Sisa</th></tr>
+</thead>
 <tbody id="stokBarang"></tbody>
 </table>
 </div>
@@ -110,17 +128,30 @@ th{background:#e5e7eb}
 <!-- DOWNLOAD -->
 <div class="card">
 <h3>Download Laporan</h3>
+
+<label>Sumber Dana</label>
 <select id="filterDana">
+<option value="">-- Semua Dana --</option>
 <option>BOSKAB 1</option>
 <option>BOSKAB 2</option>
 <option>BOP 1</option>
 <option>BOP 2</option>
 <option>Dana Lainnya</option>
 </select>
-<label>Dari</label>
+
+<label>Jenis Barang</label>
+<select id="filterJenisBarang">
+<option value="">-- Semua Jenis --</option>
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
+
+<label>Dari Tanggal</label>
 <input type="date" id="tglAwal">
-<label>Sampai</label>
+
+<label>Sampai Tanggal</label>
 <input type="date" id="tglAkhir">
+
 <button class="simpan" onclick="downloadCSV()">Download CSV</button>
 </div>
 
@@ -150,6 +181,7 @@ function simpanMasuk(){
 data.push({
 tanggal:mTgl.value,
 barang:mNama.value,
+jenisBarang:mJenisBarang.value,
 jenis:'Masuk',
 jumlah:+mJumlah.value,
 dana:mDana.value,
@@ -162,6 +194,7 @@ function simpanKeluar(){
 data.push({
 tanggal:kTgl.value,
 barang:kNama.value,
+jenisBarang:kJenisBarang.value,
 jenis:'Keluar',
 jumlah:+kJumlah.value,
 dana:kDana.value,
@@ -178,35 +211,56 @@ tampil();
 function tampil(){
 let stok={},html='';
 data.forEach(d=>{
-if(!stok[d.barang])stok[d.barang]={m:0,k:0};
-d.jenis==='Masuk'?stok[d.barang].m+=d.jumlah:stok[d.barang].k+=d.jumlah;
-let sisa=stok[d.barang].m-stok[d.barang].k;
-html+=`<tr><td>${d.tanggal}</td><td>${d.barang}</td><td>${d.jenis}</td><td>${d.jumlah}</td><td>${sisa}</td><td>${d.dana}</td><td>${d.ket}</td></tr>`;
+let key=d.barang+'-'+d.jenisBarang;
+if(!stok[key])stok[key]={m:0,k:0,jenis:d.jenisBarang};
+d.jenis==='Masuk'?stok[key].m+=d.jumlah:stok[key].k+=d.jumlah;
+let sisa=stok[key].m-stok[key].k;
+
+html+=`<tr>
+<td>${d.tanggal}</td>
+<td>${d.barang}</td>
+<td>${d.jenisBarang}</td>
+<td>${d.jenis}</td>
+<td>${d.jumlah}</td>
+<td>${sisa}</td>
+<td>${d.dana}</td>
+<td>${d.ket}</td>
+</tr>`;
 });
 tabel.innerHTML=html;
 
 let sb='';
-for(let b in stok){
-sb+=`<tr><td>${b}</td><td>${stok[b].m}</td><td>${stok[b].k}</td><td>${stok[b].m-stok[b].k}</td></tr>`;
+for(let k in stok){
+sb+=`<tr>
+<td>${k.split('-')[0]}</td>
+<td>${stok[k].jenis}</td>
+<td>${stok[k].m}</td>
+<td>${stok[k].k}</td>
+<td>${stok[k].m-stok[k].k}</td>
+</tr>`;
 }
 stokBarang.innerHTML=sb;
 }
 
 function downloadCSV(){
 let hasil=data.filter(d=>{
-return d.dana===filterDana.value &&
-(!tglAwal.value||d.tanggal>=tglAwal.value)&&
+return (!filterDana.value||d.dana===filterDana.value) &&
+(!filterJenisBarang.value||d.jenisBarang===filterJenisBarang.value) &&
+(!tglAwal.value||d.tanggal>=tglAwal.value) &&
 (!tglAkhir.value||d.tanggal<=tglAkhir.value);
 });
-if(!hasil.length)return alert('Data kosong');
 
-let csv='Tanggal,Barang,Jenis,Jumlah,Dana,Keterangan\n';
-hasil.forEach(d=>csv+=`${d.tanggal},${d.barang},${d.jenis},${d.jumlah},${d.dana},"${d.ket}"\n`);
+if(!hasil.length) return alert('Data tidak ditemukan');
+
+let csv='Tanggal,Barang,Jenis Barang,Masuk/Keluar,Jumlah,Sumber Dana,Keterangan\n';
+hasil.forEach(d=>{
+csv+=`${d.tanggal},${d.barang},${d.jenisBarang},${d.jenis},${d.jumlah},${d.dana},"${d.ket}"\n`;
+});
 
 let a=document.createElement('a');
 let now=new Date().toISOString().slice(0,10);
-a.href=URL.createObjectURL(new Blob([csv]));
-a.download=`Inventaris_${filterDana.value}_${now}.csv`;
+a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+a.download=`Inventaris_${filterDana.value||'SEMUA_DANA'}_${filterJenisBarang.value||'SEMUA_JENIS'}_${now}.csv`;
 a.click();
 }
 </script>
