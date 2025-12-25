@@ -268,10 +268,10 @@ window.onload = function() {
 
     const filtered = data.filter(d=>{
       if(fTipe && d.tipe !== fTipe) return false;
-      if(fJenis && d.jenis!==fJenis) return false;
-      if(fDana && d.dana!==fDana) return false;
-      if(fAwal && d.tanggal<fAwal) return false;
-      if(fAkhir && d.tanggal>fAkhir) return false;
+      if(fJenis && d.jenis && d.jenis !== fJenis) return false; // cek hanya jika ada properti jenis
+      if(fDana && d.dana && d.dana !== fDana) return false;   // cek hanya jika ada properti dana
+      if(fAwal && d.tanggal < fAwal) return false;
+      if(fAkhir && d.tanggal > fAkhir) return false;
       return true;
     });
 
