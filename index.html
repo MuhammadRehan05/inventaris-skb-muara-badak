@@ -137,25 +137,9 @@ button{cursor:pointer;border:none;border-radius:6px}
 <!-- DOWNLOAD -->
 <div class="card">
 <h3>Download Excel</h3>
-<select id="fTipe">
-<option value="">Semua Tipe</option>
-<option value="Masuk">Barang Masuk</option>
-<option value="Keluar">Barang Keluar</option>
-</select>
-<select id="fJenis">
-<option value="">Semua Jenis</option>
-<option>Barang Modal</option>
-<option>BAJAS</option>
-</select>
-<select id="fDana">
-<option value="">Semua Dana</option>
-<option>BOSKAB 1</option><option>BOSKAB 2</option>
-<option>BOP 1</option><option>BOP 2</option>
-<option>Dana Lainnya</option>
-</select>
 <input type="date" id="fAwal">
 <input type="date" id="fAkhir">
-<button class="primary" onclick="downloadExcel()">Download Excel</button>
+<button class="primary" onclick="downloadExcel()">Download Excel Per Sheet</button>
 </div>
 
 </div>
@@ -277,27 +261,29 @@ window.onload = function() {
   }
 
   window.downloadExcel = function() {
-    const fTipe = document.getElementById('fTipe').value;
-    const fJenis = document.getElementById('fJenis').value;
-    const fDana = document.getElementById('fDana').value;
     const fAwal = document.getElementById('fAwal').value;
     const fAkhir = document.getElementById('fAkhir').value;
 
-    const filtered = data.filter(d=>{
-      if(fTipe && d.tipe !== fTipe) return false;
-      if(fJenis && d.jenis !== undefined && d.jenis !== fJenis) return false;
-      if(fDana && d.dana !== undefined && d.dana !== fDana) return false;
-      if(fAwal && d.tanggal < fAwal) return false;
-      if(fAkhir && d.tanggal > fAkhir) return false;
-      return true;
+    if(data.length===0) return alert('Data kosong');
+
+    const grouped = {};
+
+    data.forEach(d=>{
+      if(fAwal && d.tanggal < fAwal) return;
+      if(fAkhir && d.tanggal > fAkhir) return;
+      const key = `${d.tipe}-${d.jenis||'-' }-${d.dana||'-'}`;
+      if(!grouped[key]) grouped[key]=[];
+      grouped[key].push(d);
     });
 
-    if(filtered.length === 0) return alert('Tidak ada data sesuai filter');
-
-    const ws = XLSX.utils.json_to_sheet(filtered);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Inventaris');
-    XLSX.writeFile(wb,'Inventaris_SKB.xlsx');
+
+    for(const key in grouped){
+      const ws = XLSX.utils.json_to_sheet(grouped[key]);
+      XLSX.utils.book_append_sheet(wb, ws, key.substring(0,31));
+    }
+
+    XLSX.writeFile(wb,'Inventaris_SKB_MultiSheet.xlsx');
   };
 
   updateDashboard();
