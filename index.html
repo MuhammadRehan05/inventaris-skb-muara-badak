@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Inventaris SKB Muara Badak</title>
-
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
 <style>
 body{font-family:Arial;margin:0;background:#f1f5f9}
 .hidden{display:none}
@@ -28,7 +26,6 @@ button{cursor:pointer;border:none;border-radius:6px}
 .logoutBtn{background:#f59e0b;color:white;padding:8px;border:none;border-radius:6px;cursor:pointer}
 </style>
 </head>
-
 <body>
 
 <!-- LOGIN -->
@@ -37,7 +34,7 @@ button{cursor:pointer;border:none;border-radius:6px}
 <h3>Inventaris SKB Muara Badak</h3>
 <input id="user" placeholder="Username">
 <input id="pass" type="password" placeholder="Password">
-<button class="primary" onclick="login()">Login</button>
+<button class="primary" id="loginBtn">Login</button>
 <div id="loginInfo">
 <strong>Username / Password Default:</strong>
 <ul>
@@ -56,7 +53,7 @@ button{cursor:pointer;border:none;border-radius:6px}
 <img src="logo.png" alt="Logo">
 <h3>Dashboard Inventaris</h3>
 </div>
-<button class="logoutBtn" onclick="logout()">Logout</button>
+<button class="logoutBtn" id="logoutBtn">Logout</button>
 </header>
 
 <div class="container">
@@ -87,7 +84,7 @@ button{cursor:pointer;border:none;border-radius:6px}
 <option>rim</option><option>buah</option><option>pcs</option>
 <option>pack</option><option>kotak</option><option>biji</option><option>set</option>
 </select>
-<button class="success" onclick="masuk()">Simpan</button>
+<button class="success" onclick="masukBarang()">Simpan</button>
 </div>
 
 <!-- BARANG KELUAR -->
@@ -147,130 +144,137 @@ button{cursor:pointer;border:none;border-radius:6px}
 </select>
 <input type="date" id="fAwal">
 <input type="date" id="fAkhir">
-<button class="primary" onclick="download()">Download Excel</button>
+<button class="primary" onclick="downloadExcel()">Download Excel</button>
 </div>
 
 </div>
 </div>
 
 <script>
-const akun = [
-  {u:'admin', p:'12345', r:'admin'},
-  {u:'operator', p:'123', r:'operator'},
-  {u:'rehan', p:'456', r:'operator'}
-];
+window.onload = function() {
+  const akun = [
+    {u:'admin', p:'123', r:'admin'},
+    {u:'operator', p:'123', r:'operator'},
+    {u:'rehan', p:'456', r:'operator'}
+  ];
 
-let data = JSON.parse(localStorage.getItem('inv')) || [];
+  let data = JSON.parse(localStorage.getItem('inv')) || [];
 
-const masuk = document.getElementById('masuk');
-const keluar = document.getElementById('keluar');
+  const masuk = document.getElementById('masuk');
+  const keluar = document.getElementById('keluar');
 
-function login(){
-  const username = document.getElementById('user');
-  const password = document.getElementById('pass');
-  let a = akun.find(x => x.u === username.value && x.p === password.value);
-  if(!a) return alert('Login gagal');
-  document.getElementById('loginBox').style.display = 'none'; 
-  document.getElementById('app').classList.remove('hidden'); 
-  update();
-}
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
 
-function logout(){
-  document.getElementById('loginBox').style.display = 'block';
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('user').value = '';
-  document.getElementById('pass').value = '';
-}
+  loginBtn.onclick = function() {
+    const username = document.getElementById('user').value;
+    const password = document.getElementById('pass').value;
+    let a = akun.find(x => x.u === username && x.p === password);
+    if(!a) return alert('Login gagal');
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('app').classList.remove('hidden');
+    updateDashboard();
+  };
 
-function show(id){
-  masuk.classList.add('hidden');
-  keluar.classList.add('hidden');
-  document.getElementById(id).classList.remove('hidden');
-}
+  logoutBtn.onclick = function() {
+    document.getElementById('loginBox').style.display = 'block';
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('user').value = '';
+    document.getElementById('pass').value = '';
+  };
 
-function stok(b){
-  let m=0,k=0;
-  data.forEach(d=>{
-    if(d.barang===b && d.tipe==='Masuk') m+=d.jumlah;
-    if(d.barang===b && d.tipe==='Keluar') k+=d.jumlah;
-  });
-  return m-k;
-}
+  window.show = function(id) {
+    masuk.classList.add('hidden');
+    keluar.classList.add('hidden');
+    document.getElementById(id).classList.remove('hidden');
+  };
 
-function masuk(){
-  if(!mTanggal.value || !mBarang.value || !mJumlah.value) return alert('Lengkapi semua field!');
-  data.push({
-    tipe:'Masuk',
-    tanggal:mTanggal.value,
-    barang:mBarang.value,
-    jenis:mJenis.value,
-    dana:mDana.value,
-    jumlah:+mJumlah.value,
-    satuan:mSatuan.value
-  });
-  simpan();
-}
+  window.masukBarang = function() {
+    const tgl = document.getElementById('mTanggal').value;
+    const barang = document.getElementById('mBarang').value;
+    const jenis = document.getElementById('mJenis').value;
+    const dana = document.getElementById('mDana').value;
+    const jumlah = document.getElementById('mJumlah').value;
+    const satuan = document.getElementById('mSatuan').value;
+    if(!tgl || !barang || !jumlah) return alert('Lengkapi semua field!');
+    data.push({tipe:'Masuk', tanggal:tgl, barang, jenis, dana, jumlah:+jumlah, satuan});
+    localStorage.setItem('inv', JSON.stringify(data));
+    updateDashboard();
+  };
 
-function keluarBarang(){
-  let b=kBarang.value;
-  if(!kTanggal.value || !kJumlah.value) return alert('Lengkapi semua field!');
-  if(kJumlah.value>stok(b)) return alert('Stok tidak cukup');
-  data.push({
-    tipe:'Keluar',
-    tanggal:kTanggal.value,
-    barang:b,
-    jumlah:+kJumlah.value,
-    satuan:kSatuan.value,
-    ambil:kAmbil.value
-  });
-  simpan();
-}
+  window.keluarBarang = function() {
+    const tgl = document.getElementById('kTanggal').value;
+    const barang = document.getElementById('kBarang').value;
+    const jumlah = document.getElementById('kJumlah').value;
+    const satuan = document.getElementById('kSatuan').value;
+    const ambil = document.getElementById('kAmbil').value;
+    if(!tgl || !jumlah) return alert('Lengkapi semua field!');
+    if(jumlah > stok(barang)) return alert('Stok tidak cukup');
+    data.push({tipe:'Keluar', tanggal:tgl, barang, jumlah:+jumlah, satuan, ambil});
+    localStorage.setItem('inv', JSON.stringify(data));
+    updateDashboard();
+  };
 
-function simpan(){
-  localStorage.setItem('inv',JSON.stringify(data));
-  update();
-}
+  function stok(barang) {
+    let masukTotal = 0, keluarTotal = 0;
+    data.forEach(d=>{
+      if(d.barang === barang && d.tipe === 'Masuk') masukTotal += d.jumlah;
+      if(d.barang === barang && d.tipe === 'Keluar') keluarTotal += d.jumlah;
+    });
+    return masukTotal - keluarTotal;
+  }
 
-function hapus(i){
-  if(confirm('Hapus data?')){ data.splice(i,1); simpan(); }
-}
+  function updateDashboard() {
+    const kBarang = document.getElementById('kBarang');
+    kBarang.innerHTML = '';
+    [...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))]
+      .forEach(b => kBarang.innerHTML += `<option>${b}</option>`);
 
-function update(){
-  kBarang.innerHTML='';
-  [...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))]
-  .forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
+    let rekapHtml = '<tr><th>Barang</th><th>Sisa</th></tr>';
+    [...new Set(data.map(d=>d.barang))].forEach(b => {
+      rekapHtml += `<tr><td>${b}</td><td>${stok(b)}</td></tr>`;
+    });
+    document.getElementById('rekap').innerHTML = rekapHtml;
 
-  let r='<tr><th>Barang</th><th>Sisa</th></tr>';
-  [...new Set(data.map(d=>d.barang))].forEach(b=>{
-    r+=`<tr><td>${b}</td><td>${stok(b)}</td></tr>`;
-  });
-  rekap.innerHTML=r;
+    let tabelHtml = '<tr><th>No</th><th>Tipe</th><th>Tanggal</th><th>Barang</th><th>Jumlah</th><th>Satuan</th><th>Aksi</th></tr>';
+    data.forEach((d,i)=>{
+      tabelHtml += `<tr>
+        <td>${i+1}</td><td>${d.tipe}</td><td>${d.tanggal}</td>
+        <td>${d.barang}</td><td>${d.jumlah}</td><td>${d.satuan||''}</td>
+        <td><button class="danger" onclick="hapusData(${i})">Hapus</button></td>
+      </tr>`;
+    });
+    document.getElementById('tabel').innerHTML = tabelHtml;
+  }
 
-  let t='<tr><th>No</th><th>Tipe</th><th>Tanggal</th><th>Barang</th><th>Jumlah</th><th>Satuan</th><th>Aksi</th></tr>';
-  data.forEach((d,i)=>{
-    t+=`<tr>
-    <td>${i+1}</td><td>${d.tipe}</td><td>${d.tanggal}</td>
-    <td>${d.barang}</td><td>${d.jumlah}</td><td>${d.satuan||''}</td>
-    <td><button class="danger" onclick="hapus(${i})">Hapus</button></td>
-    </tr>`;
-  });
-  tabel.innerHTML=t;
-}
+  window.hapusData = function(i) {
+    if(confirm('Hapus data?')) {
+      data.splice(i,1);
+      localStorage.setItem('inv', JSON.stringify(data));
+      updateDashboard();
+    }
+  }
 
-function download(){
-  let h=data.filter(d=>{
-    if(fJenis.value && d.jenis!==fJenis.value) return false;
-    if(fDana.value && d.dana!==fDana.value) return false;
-    if(fAwal.value && d.tanggal<fAwal.value) return false;
-    if(fAkhir.value && d.tanggal>fAkhir.value) return false;
-    return true;
-  });
-  let ws=XLSX.utils.json_to_sheet(h);
-  let wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Inventaris');
-  XLSX.writeFile(wb,'Inventaris_SKB.xlsx');
+  window.downloadExcel = function() {
+    const fJenis = document.getElementById('fJenis').value;
+    const fDana = document.getElementById('fDana').value;
+    const fAwal = document.getElementById('fAwal').value;
+    const fAkhir = document.getElementById('fAkhir').value;
+    const filtered = data.filter(d=>{
+      if(fJenis && d.jenis!==fJenis) return false;
+      if(fDana && d.dana!==fDana) return false;
+      if(fAwal && d.tanggal<fAwal) return false;
+      if(fAkhir && d.tanggal>fAkhir) return false;
+      return true;
+    });
+    const ws = XLSX.utils.json_to_sheet(filtered);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Inventaris');
+    XLSX.writeFile(wb,'Inventaris_SKB.xlsx');
+  };
+
+  updateDashboard();
 }
 </script>
-
 </body>
 </html>
