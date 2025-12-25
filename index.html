@@ -3,36 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <title>Inventaris SKB Muara Badak</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="icon" href="logo.png">
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f1f5f9}
+body{font-family:Segoe UI,Arial;background:#f1f5f9;margin:0}
 .hidden{display:none}
-.center{text-align:center}
-#loginBox{max-width:420px;margin:80px auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
-#loginBox img{height:90px;margin-bottom:10px}
 header{background:#1e40af;color:#fff;padding:15px;display:flex;align-items:center;gap:15px}
-header img{height:45px}
-.container{padding:20px}
-.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.1);margin-bottom:20px}
-.menu{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
-button{border:none;border-radius:8px;padding:10px 16px;font-weight:bold;cursor:pointer}
+header img{height:50px}
+.card{background:#fff;margin:20px;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+input,select,button{padding:10px;margin:5px 0;width:100%}
+button{border:none;border-radius:8px;font-weight:bold;cursor:pointer}
 .primary{background:#2563eb;color:#fff}
 .success{background:#16a34a;color:#fff}
-.danger{background:#dc2626;color:#fff}
 .warn{background:#f59e0b;color:#fff}
-input,select{width:100%;padding:10px;margin:6px 0;border-radius:6px;border:1px solid #ccc}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
 th{background:#e5e7eb}
+.menu{display:flex;gap:10px;flex-wrap:wrap}
 </style>
 </head>
 
 <body>
 
 <!-- LOGIN -->
-<div id="loginBox" class="center">
-<img src="logo.png">
+<div id="loginBox" class="card" style="max-width:400px;margin:100px auto;text-align:center">
+<img src="logo.png" height="90"><br><br>
 <h2>Inventaris SKB Muara Badak</h2>
 <input id="user" placeholder="Username">
 <input id="pass" type="password" placeholder="Password">
@@ -41,27 +37,37 @@ th{background:#e5e7eb}
 
 <!-- APP -->
 <div id="app" class="hidden">
+
 <header>
 <img src="logo.png">
 <h2>Dashboard Inventaris SKB Muara Badak</h2>
 </header>
 
-<div class="container">
-<div class="menu">
+<div class="menu card">
 <button class="primary" onclick="show('masuk')">Barang Masuk</button>
-<button class="danger" onclick="show('keluar')">Barang Keluar</button>
-<button class="warn" onclick="show('rekap')">Rekap & Download</button>
+<button class="warn" onclick="show('keluar')">Barang Keluar</button>
+<button class="success" onclick="show('rekap')">Rekap & Download</button>
 </div>
 
 <!-- BARANG MASUK -->
 <div id="masuk" class="card hidden">
 <h3>📥 Barang Masuk</h3>
 <input type="date" id="mTanggal">
-<input id="mNama" placeholder="Nama Barang">
-<select id="mJenis"><option>Barang Modal</option><option>BAJAS</option></select>
+<input id="mBarang" placeholder="Nama Barang">
+<select id="mJenis">
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
+<select id="mSatuan">
+<option>rim</option><option>buah</option><option>pcs</option>
+<option>pack</option><option>kotak</option><option>biji</option><option>set</option>
+</select>
+<select id="mDana">
+<option>BOSKAB 1</option><option>BOSKAB 2</option>
+<option>BOP 1</option><option>BOP 2</option>
+<option>Dana Lainnya</option>
+</select>
 <input type="number" id="mJumlah" placeholder="Jumlah">
-<select id="mSatuan"><option>rim</option><option>buah</option><option>pcs</option><option>pack</option><option>kotak</option><option>biji</option><option>set</option></select>
-<select id="mDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option><option>Dana Lainnya</option></select>
 <button class="success" onclick="simpanMasuk()">Simpan</button>
 </div>
 
@@ -71,60 +77,153 @@ th{background:#e5e7eb}
 <input type="date" id="kTanggal">
 <select id="kBarang"></select>
 <input type="number" id="kJumlah" placeholder="Jumlah">
-<select id="kSatuan"><option>rim</option><option>buah</option><option>pcs</option><option>pack</option><option>kotak</option><option>biji</option><option>set</option></select>
 <select id="kPengambil">
-<option>Bu Munawarah. S.Pd</option><option>Bu Liliana Sataria. S.Kom</option>
-<option>Bu Fatimah. S.Pd</option><option>Bu Fitriyana. S.Pd</option>
-<option>Bu Hirda Yulinalmi</option><option>Bu Dwi Rika. S.Pd</option>
-<option>Bu Uut</option><option>Pak Heri Sadiman. S.Pd</option>
-<option>Pak Jemidin. S.Pd., M.Pd</option><option>Pak Rehan</option>
+<option>Bu Munawarah. S.Pd</option>
+<option>Bu Liliana Sataria. S.Kom</option>
+<option>Bu Fatimah. S.Pd</option>
+<option>Bu Fitriyana. S.Pd</option>
+<option>Bu Hirda Yulinalmi</option>
+<option>Bu Dwi Rika. S.Pd</option>
+<option>Bu Uut</option>
+<option>Pak Heri Sadiman. S.Pd</option>
+<option>Pak Jemidin. S.Pd., M.Pd</option>
+<option>Pak Rehan</option>
 </select>
-<select id="kDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option><option>Dana Lainnya</option></select>
-<button class="success" onclick="simpanKeluar()">Simpan</button>
+<button class="warn" onclick="simpanKeluar()">Simpan</button>
 </div>
 
 <!-- REKAP -->
 <div id="rekap" class="card hidden">
-<h3>📦 Rekap Per Barang</h3>
+<h3>📊 Rekap Stok</h3>
+
 <table>
-<thead><tr><th>Barang</th><th>Jenis</th><th>Satuan</th><th>Masuk</th><th>Keluar</th><th>Sisa</th></tr></thead>
-<tbody id="tblPerBarang"></tbody>
+<thead>
+<tr>
+<th>Barang</th><th>Jenis</th><th>Satuan</th>
+<th>Masuk</th><th>Keluar</th><th>Sisa</th>
+</tr>
+</thead>
+<tbody id="tblBarang"></tbody>
 </table>
 
-<h3>📊 Rekap Keseluruhan</h3>
-<table>
-<thead><tr><th>Total Masuk</th><th>Total Keluar</th><th>Total Sisa</th></tr></thead>
-<tbody id="tblTotal"></tbody>
-</table>
+<br>
 
-<hr>
-<h3>📥 Download Data</h3>
-<select id="fTipe"><option value="">Semua</option><option value="Masuk">Barang Masuk</option><option value="Keluar">Barang Keluar</option></select>
-<select id="fDana"><option value="">Semua Dana</option><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option><option>Dana Lainnya</option></select>
-<select id="fJenis"><option value="">Semua Jenis</option><option>Barang Modal</option><option>BAJAS</option></select>
-<input type="date" id="fAwal"><input type="date" id="fAkhir">
-<button class="primary" onclick="exportFilter()">Download Excel</button>
-<button class="warn" onclick="backup()">Backup</button>
+<button class="primary" onclick="exportExcel()">📥 Download Excel</button>
+<button class="warn" onclick="backup()">💾 Backup</button>
 <input type="file" onchange="restore(event)">
 </div>
-</div>
+
 </div>
 
 <script>
-const USER='admin',PASS='12345';
+const USERS={
+admin:{pass:'12345',role:'admin'},
+operator:{pass:'123',role:'operator'}
+};
+
 let data=JSON.parse(localStorage.getItem('inv'))||[];
 
-function login(){if(user.value===USER&&pass.value===PASS){loginBox.classList.add('hidden');app.classList.remove('hidden');show('masuk')}else alert('Login salah')}
-function show(id){document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');if(id==='keluar')loadBarang();if(id==='rekap')rekap()}
-function save(){localStorage.setItem('inv',JSON.stringify(data))}
-function simpanMasuk(){data.push({tanggal:mTanggal.value,barang:mNama.value,jenis:mJenis.value,jumlah:+mJumlah.value,satuan:mSatuan.value,dana:mDana.value,tipe:'Masuk'});save();alert('Tersimpan')}
-function simpanKeluar(){if(+kJumlah.value>stok(kBarang.value))return alert('Stok tidak cukup');data.push({tanggal:kTanggal.value,barang:kBarang.value,jenis:'',jumlah:+kJumlah.value,satuan:kSatuan.value,dana:kDana.value,pengambil:kPengambil.value,tipe:'Keluar'});save();alert('Tersimpan')}
-function stok(b){let m=0,k=0;data.forEach(d=>{if(d.barang===b){if(d.tipe==='Masuk')m+=d.jumlah;else k+=d.jumlah}});return m-k}
-function loadBarang(){kBarang.innerHTML='';[...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))].forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`)}
-function rekap(){let map={},tm=0,tk=0;data.forEach(d=>{if(!map[d.barang])map[d.barang]={barang:d.barang,jenis:d.jenis||'-',satuan:d.satuan,masuk:0,keluar:0};if(d.tipe==='Masuk'){map[d.barang].masuk+=d.jumlah;tm+=d.jumlah}else{map[d.barang].keluar+=d.jumlah;tk+=d.jumlah}});tblPerBarang.innerHTML='';let ts=0;Object.values(map).forEach(r=>{let s=r.masuk-r.keluar;ts+=s;tblPerBarang.innerHTML+=`<tr><td>${r.barang}</td><td>${r.jenis}</td><td>${r.satuan}</td><td>${r.masuk}</td><td>${r.keluar}</td><td><b>${s}</b></td></tr>`});tblTotal.innerHTML=`<tr><td>${tm}</td><td>${tk}</td><td><b>${ts}</b></td></tr>`}
-function exportFilter(){let h=data.filter(d=>{if(fTipe.value&&d.tipe!==fTipe.value)return false;if(fDana.value&&d.dana!==fDana.value)return false;if(fJenis.value&&d.jenis!==fJenis.value)return false;if(fAwal.value&&d.tanggal<fAwal.value)return false;if(fAkhir.value&&d.tanggal>fAkhir.value)return false;return true});if(!h.length)return alert('Tidak ada data');let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(h),'Data');XLSX.writeFile(wb,'Inventaris_SKB.xlsx')}
-function backup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data)]));a.download='backup.json';a.click()}
-function restore(e){let r=new FileReader();r.onload=()=>{data=JSON.parse(r.result);save();alert('Restore berhasil')};r.readAsText(e.target.files[0])}
+function login(){
+if(USERS[user.value] && USERS[user.value].pass===pass.value){
+loginBox.classList.add('hidden');
+app.classList.remove('hidden');
+refreshBarang();
+}else alert('Login salah');
+}
+
+function show(id){
+['masuk','keluar','rekap'].forEach(x=>document.getElementById(x).classList.add('hidden'));
+document.getElementById(id).classList.remove('hidden');
+if(id==='rekap') rekap();
+}
+
+function simpanMasuk(){
+data.push({
+tanggal:mTanggal.value,
+barang:mBarang.value,
+jenis:mJenis.value,
+satuan:mSatuan.value,
+dana:mDana.value,
+jumlah:+mJumlah.value,
+tipe:'Masuk'
+});
+save();
+}
+
+function stok(n){
+let m=0,k=0;
+data.filter(d=>d.barang===n).forEach(d=>{
+d.tipe==='Masuk'?m+=d.jumlah:k+=d.jumlah;
+});
+return m-k;
+}
+
+function simpanKeluar(){
+let b=kBarang.value;
+if(kJumlah.value>stok(b)) return alert('Stok tidak cukup');
+
+let ref=data.find(d=>d.barang===b && d.tipe==='Masuk');
+
+data.push({
+tanggal:kTanggal.value,
+barang:b,
+jenis:ref.jenis,
+satuan:ref.satuan,
+jumlah:+kJumlah.value,
+pengambil:kPengambil.value,
+tipe:'Keluar'
+});
+save();
+}
+
+function save(){
+localStorage.setItem('inv',JSON.stringify(data));
+refreshBarang();
+}
+
+function refreshBarang(){
+kBarang.innerHTML='';
+[...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))]
+.forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
+}
+
+function rekap(){
+let map={};
+tblBarang.innerHTML='';
+data.forEach(d=>{
+if(!map[d.barang]) map[d.barang]={...d,masuk:0,keluar:0};
+d.tipe==='Masuk'?map[d.barang].masuk+=d.jumlah:map[d.barang].keluar+=d.jumlah;
+});
+Object.values(map).forEach(r=>{
+tblBarang.innerHTML+=`
+<tr>
+<td>${r.barang}</td><td>${r.jenis}</td><td>${r.satuan}</td>
+<td>${r.masuk}</td><td>${r.keluar}</td><td>${r.masuk-r.keluar}</td>
+</tr>`;
+});
+}
+
+function exportExcel(){
+let ws=XLSX.utils.json_to_sheet(data);
+let wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,'Inventaris');
+XLSX.writeFile(wb,'Inventaris_SKB_Muara_Badak.xlsx');
+}
+
+function backup(){
+let a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
+a.download='backup_inventaris.json';
+a.click();
+}
+
+function restore(e){
+let f=e.target.files[0];
+let r=new FileReader();
+r.onload=()=>{data=JSON.parse(r.result);save();};
+r.readAsText(f);
+}
 </script>
+
 </body>
 </html>
