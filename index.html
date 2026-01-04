@@ -135,57 +135,86 @@ button{cursor:pointer;border:none;border-radius:6px}
 </div>
 
 <!-- DOWNLOAD -->
+<script>
 function downloadExcel(){
-let filtered=data.filter(d=>
-(!fTipe.value||d.tipe===fTipe.value)&&
-(!fJenis.value||d.jenis===fJenis.value)&&
-(!fDana.value||d.dana===fDana.value)
+
+const filtered = data.filter(d =>
+ (!fJenis.value || d.jenis === fJenis.value) &&
+ (!fDana.value || d.dana === fDana.value)
 );
-if(!filtered.length) return alert('Data kosong');
 
-let masuk = filtered.filter(d=>d.tipe==='Masuk');
-let keluar = filtered.filter(d=>d.tipe==='Keluar');
+if(!filtered.length){
+ alert('Data kosong');
+ return;
+}
 
-let ws = XLSX.utils.aoa_to_sheet([
+const masuk  = filtered.filter(d=>d.tipe==='Masuk');
+const keluar = filtered.filter(d=>d.tipe==='Keluar');
+
+let ws = XLSX.utils.aoa_to_sheet([]);
+
+/* =====================
+   TABEL BARANG MASUK
+===================== */
+XLSX.utils.sheet_add_aoa(ws,[
  ['DATA BARANG MASUK'],
- ['No','Barang','Jumlah','Satuan','Jenis','Dana']
-]);
+ ['No','Nama Barang','Jumlah','Satuan','Jenis','Sumber Dana','Tanggal']
+],{origin:'A1'});
 
 masuk.forEach((d,i)=>{
-XLSX.utils.sheet_add_aoa(ws,[[
- i+1,d.barang,d.jumlah,d.satuan,d.jenis,d.dana
-]],{origin:-1});
+ XLSX.utils.sheet_add_aoa(ws,[[
+  i+1,d.barang,d.jumlah,d.satuan,d.jenis,d.dana,d.tanggal
+ ]],{origin:-1});
 });
 
-XLSX.utils.sheet_add_aoa(ws,[[] ,['DATA BARANG KELUAR'],['No','Barang','Jumlah','Satuan','Jenis','Dana','Pengambilan']],{origin:-1});
+/* =====================
+   TABEL BARANG KELUAR
+===================== */
+let startKeluar = masuk.length + 4;
+
+XLSX.utils.sheet_add_aoa(ws,[
+ [''],
+ ['DATA BARANG KELUAR'],
+ ['No','Nama Barang','Jumlah','Satuan','Jenis','Sumber Dana','Pengambil','Tanggal']
+],{origin:'A'+startKeluar});
 
 keluar.forEach((d,i)=>{
-XLSX.utils.sheet_add_aoa(ws,[[
- i+1,d.barang,d.jumlah,d.satuan,d.jenis,d.dana,d.pengambilan
-]],{origin:-1});
+ XLSX.utils.sheet_add_aoa(ws,[[
+  i+1,d.barang,d.jumlah,d.satuan,d.jenis,d.dana,d.pengambilan,d.tanggal
+ ]],{origin:-1});
 });
 
-/* REKAP */
-XLSX.utils.sheet_add_aoa(ws,[[],['REKAP SISA'],['Barang','Jenis','Dana','Masuk','Keluar','Sisa']],{origin:-1});
-
+/* =====================
+   REKAP SISA
+===================== */
 let map={};
 filtered.forEach(d=>{
-let k=d.barang+'|'+d.jenis+'|'+d.dana;
-if(!map[k]) map[k]={barang:d.barang,jenis:d.jenis,dana:d.dana,masuk:0,keluar:0};
-if(d.tipe==='Masuk') map[k].masuk+=d.jumlah;
-if(d.tipe==='Keluar') map[k].keluar+=d.jumlah;
+ let k=d.barang+'|'+d.jenis+'|'+d.dana;
+ if(!map[k]) map[k]={barang:d.barang,jenis:d.jenis,dana:d.dana,masuk:0,keluar:0};
+ if(d.tipe==='Masuk')  map[k].masuk  += d.jumlah;
+ if(d.tipe==='Keluar') map[k].keluar += d.jumlah;
 });
+
+XLSX.utils.sheet_add_aoa(ws,[
+ [''],
+ ['REKAP SISA BARANG'],
+ ['Barang','Jenis','Dana','Total Masuk','Total Keluar','Sisa']
+],{origin:-1});
 
 Object.values(map).forEach(r=>{
-XLSX.utils.sheet_add_aoa(ws,[[
- r.barang,r.jenis,r.dana,r.masuk,r.keluar,r.masuk-r.keluar
-]],{origin:-1});
+ XLSX.utils.sheet_add_aoa(ws,[[
+  r.barang,r.jenis,r.dana,r.masuk,r.keluar,r.masuk-r.keluar
+ ]],{origin:-1});
 });
 
-let wb=XLSX.utils.book_new();
+/* =====================
+   EXPORT
+===================== */
+let wb = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,'Inventaris');
 XLSX.writeFile(wb,'Inventaris_SKB_Muara_Badak.xlsx');
 }
+</script>
 
 
 /* UPDATE */
@@ -271,4 +300,5 @@ updateAll();
 </script>
 </body>
 </html>
+
 
