@@ -183,40 +183,46 @@ render();
 /* ===============================
    DOWNLOAD EXCEL (SATU SHEET)
 ================================ */
+<script>
 function downloadExcel(){
-  let fDana=document.getElementById('filterDana').value;
-  let fJenis=document.getElementById('filterJenis').value;
+  let fDana = document.getElementById('filterDana').value;
+  let fJenis = document.getElementById('filterJenis').value;
 
-  let hasil = rekap(raw).filter(r=>{
+  // ambil HASIL REKAP (SAMA DENGAN CETAK)
+  let data = rekap(raw).filter(r=>{
     if(fDana && r.dana!==fDana) return false;
     if(fJenis && r.jenis!==fJenis) return false;
     return true;
   });
 
-  if(!hasil.length){
-    alert('Data tidak ditemukan');
+  if(!data.length){
+    alert("Data kosong");
     return;
   }
 
-  let excel = hasil.map(r=>({
-    Barang:r.barang,
-    Masuk:r.masuk,
-    Keluar:r.keluar,
-    Sisa:r.sisa,
-    Pengambil:r.pengambil,
-    Jenis:r.jenis,
-    Dana:r.dana
+  // susun kolom PERSIS seperti tabel cetak
+  let excelData = data.map(r=>({
+    "Nama Barang": r.barang,
+    "Barang Masuk": r.masuk,
+    "Barang Keluar": r.keluar,
+    "Sisa": r.sisa,
+    "Pengambil": r.pengambil || "-",
+    "Jenis": r.jenis,
+    "Dana": r.dana
   }));
 
-  let ws = XLSX.utils.json_to_sheet(excel);
-  ws['!cols']=[{wpx:200},{},{},{},{},{},{}];
+  let ws = XLSX.utils.json_to_sheet(excelData);
+  ws["!cols"]=[
+    {wpx:200},{wpx:120},{wpx:120},{wpx:100},{wpx:150},{wpx:120},{wpx:120}
+  ];
 
   let wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Rekap Inventaris');
+  XLSX.utils.book_append_sheet(wb, ws, "Inventaris");
 
-  XLSX.writeFile(wb,'Inventaris_SKB_Muara_Badak_FINAL.xlsx');
+  XLSX.writeFile(wb, "Inventaris_FINAL.xlsx");
 }
 </script>
 
 </body>
 </html>
+
