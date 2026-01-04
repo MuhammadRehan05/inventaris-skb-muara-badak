@@ -300,8 +300,12 @@ function isiFilterDownload(){
   let danaSet  = new Set();
 
   data.forEach(x=>{
-    if(x.jenis) jenisSet.add(x.jenis);
-    if(x.dana)  danaSet.add(x.dana);
+    // 🔒 AMANKAN DATA LAMA
+    let jenis = x.jenis || 'Tidak Tercatat';
+    let dana  = x.dana  || 'Tidak Tercatat';
+
+    jenisSet.add(jenis);
+    danaSet.add(dana);
   });
 
   fJenisDownload.innerHTML = '<option value="">Semua Jenis</option>';
@@ -317,9 +321,11 @@ function isiFilterDownload(){
 }
 
 
+
 updateAll();
 </script>
 
 </body>
 </html>
+
 
