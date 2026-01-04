@@ -2,171 +2,161 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Inventaris Barang SKB Muara Badak</title>
+<title>Inventaris SKB Muara Badak</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-body{
-  font-family: Arial, sans-serif;
-  background:#f4f6f8;
-  margin:20px;
-}
+body{font-family:Arial;margin:0;background:#f4f6f8}
+.container{padding:20px}
+h2{margin-top:0}
 
-h2{margin-top:30px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid #444;padding:6px;text-align:center}
+thead th{background:#9bbb59;color:#000;font-weight:bold}
+.sub th{background:#d9d9d9}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:white;
-}
-
-th,td{
-  border:1px solid #444;
-  padding:6px;
-  font-size:13px;
-  text-align:center;
-}
-
-th{
-  background:#a6c36f;
-}
-
-.subhead{
-  background:#ddd;
-  font-weight:bold;
-}
-
-.controls{
-  margin:15px 0;
-}
-
-button,select{
-  padding:8px 12px;
-  font-size:14px;
-}
+.controls{margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap}
+button{padding:10px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
+.blue{background:#2563eb;color:white}
+.green{background:#16a34a;color:white}
 
 @media print{
-  @page{ size: landscape; }
+  @page{size:landscape}
   .controls{display:none}
 }
 </style>
 </head>
 
 <body>
+<div class="container">
 
-<h2>Inventaris Barang (Padat)</h2>
+<h2>Data Inventaris (Padat)</h2>
 
 <div class="controls">
-  <select id="filterDana">
-    <option value="">Semua Dana</option>
-    <option value="BOP">BOP</option>
-    <option value="BOSKAB">BOSKAB</option>
-  </select>
+<select id="filterDana">
+<option value="">Semua Dana</option>
+<option>BOSKAB</option>
+<option>BOP</option>
+</select>
 
-  <select id="filterJenis">
-    <option value="">Semua Jenis</option>
-    <option value="MODAL">Barang Modal</option>
-    <option value="BAJAS">BAJAS</option>
-  </select>
+<select id="filterJenis">
+<option value="">Semua Jenis</option>
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
 
-  <button onclick="downloadExcel()">⬇ Download Excel</button>
-  <button onclick="window.print()">🖨 Cetak</button>
+<button class="blue" onclick="downloadExcel()">⬇ Download Excel</button>
+<button class="green" onclick="window.print()">🖨 Cetak</button>
 </div>
 
-<table id="tabelInventaris">
+<table id="tabel">
 <thead>
 <tr>
-  <th rowspan="2">Tanggal</th>
-  <th rowspan="2">Nama Barang</th>
-  <th colspan="3">Barang</th>
-  <th rowspan="2">Pengambil</th>
-  <th rowspan="2">Keterangan</th>
+<th rowspan="2">Tanggal</th>
+<th rowspan="2">Nama Barang</th>
+<th colspan="3">Barang</th>
+<th rowspan="2">Pengambil</th>
+<th rowspan="2">Keterangan</th>
 </tr>
-<tr class="subhead">
-  <th>Masuk</th>
-  <th>Keluar</th>
-  <th>Sisa</th>
+<tr class="sub">
+<th>Masuk</th>
+<th>Keluar</th>
+<th>Sisa</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
+</div>
+
 <script>
 /* ===============================
-   AMBIL DATA LAMA (JANGAN DIUBAH)
-================================= */
-const DATA_KEY = "inventarisData";
+   AUTO KONVERSI DATA LAMA
+================================ */
+let raw = JSON.parse(localStorage.getItem("inventarisData")) || [];
+
+let data = raw.map(d=>{
+  if(typeof d === "string"){
+    return {
+      tanggal:"",
+      barang:d,
+      masuk:"",
+      keluar:"",
+      sisa:"",
+      pengambil:"",
+      dana:"",
+      jenis:"",
+      keterangan:""
+    };
+  }
+  return d;
+});
 
 /* ===============================
-   RENDER TABEL
-================================= */
-function renderTable(){
-  const data = JSON.parse(localStorage.getItem(DATA_KEY)) || [];
-  const tbody = document.querySelector("#tabelInventaris tbody");
-  tbody.innerHTML = "";
+   HITUNG SISA
+================================ */
+let stok = {};
+data.forEach(d=>{
+  if(!stok[d.barang]) stok[d.barang]=0;
+  if(d.masuk) stok[d.barang]+=Number(d.masuk);
+  if(d.keluar) stok[d.barang]-=Number(d.keluar);
+  d.sisa = stok[d.barang];
+});
 
-  const dana = document.getElementById("filterDana").value;
-  const jenis = document.getElementById("filterJenis").value;
+/* ===============================
+   TAMPILKAN TABEL
+================================ */
+function render(){
+  let tbody=document.querySelector("#tabel tbody");
+  tbody.innerHTML="";
+
+  let fDana=filterDana.value;
+  let fJenis=filterJenis.value;
 
   data.forEach(d=>{
-    if(dana && !d.keterangan?.includes(dana)) return;
-    if(jenis && !d.keterangan?.includes(jenis)) return;
+    if(fDana && !d.keterangan.includes(fDana)) return;
+    if(fJenis && !d.keterangan.includes(fJenis)) return;
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${d.tanggal || ""}</td>
-      <td>${d.nama || ""}</td>
-      <td>${d.masuk || ""}</td>
-      <td>${d.keluar || ""}</td>
-      <td>${d.sisa || ""}</td>
-      <td>${d.pengambil || ""}</td>
-      <td>${d.keterangan || ""}</td>
-    `;
-    tbody.appendChild(tr);
+    tbody.innerHTML+=`
+    <tr>
+      <td>${d.tanggal||""}</td>
+      <td>${d.barang}</td>
+      <td>${d.masuk||""}</td>
+      <td>${d.keluar||""}</td>
+      <td>${d.sisa}</td>
+      <td>${d.pengambil||""}</td>
+      <td>${d.keterangan||""}</td>
+    </tr>`;
   });
 }
 
-document.getElementById("filterDana").onchange = renderTable;
-document.getElementById("filterJenis").onchange = renderTable;
+filterDana.onchange=render;
+filterJenis.onchange=render;
+render();
 
 /* ===============================
-   DOWNLOAD EXCEL (1 SHEET)
-================================= */
+   DOWNLOAD EXCEL (RAPI)
+================================ */
 function downloadExcel(){
-  const data = JSON.parse(localStorage.getItem(DATA_KEY)) || [];
-  let rows = [
-    ["Tanggal","Nama Barang","Masuk","Keluar","Sisa","Pengambil","Keterangan"]
+  let rows=[];
+  document.querySelectorAll("#tabel tr").forEach((tr,i)=>{
+    let row=[];
+    tr.querySelectorAll("th,td").forEach(td=>row.push(td.innerText));
+    rows.push(row);
+  });
+
+  let ws=XLSX.utils.aoa_to_sheet(rows);
+
+  ws["!cols"]=[
+    {wch:12},{wch:30},{wch:10},{wch:10},{wch:10},{wch:20},{wch:25}
   ];
 
-  const dana = document.getElementById("filterDana").value;
-  const jenis = document.getElementById("filterJenis").value;
+  let wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Inventaris");
 
-  data.forEach(d=>{
-    if(dana && !d.keterangan?.includes(dana)) return;
-    if(jenis && !d.keterangan?.includes(jenis)) return;
-
-    rows.push([
-      d.tanggal||"",
-      d.nama||"",
-      d.masuk||"",
-      d.keluar||"",
-      d.sisa||"",
-      d.pengambil||"",
-      d.keterangan||""
-    ]);
-  });
-
-  let csv = rows.map(r=>r.join("\t")).join("\n");
-  let blob = new Blob([csv],{type:"application/vnd.ms-excel"});
-  let a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "inventaris.xlsx";
-  a.click();
+  XLSX.writeFile(wb,"Inventaris_SKBGabungan.xlsx");
 }
-
-/* ===============================
-   AUTO LOAD DATA LAMA
-================================= */
-document.addEventListener("DOMContentLoaded",renderTable);
 </script>
 
 </body>
