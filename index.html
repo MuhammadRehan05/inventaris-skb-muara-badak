@@ -3,28 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <title>Inventaris SKB Muara Badak</title>
-
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
 body{font-family:Arial;margin:0;background:#f1f5f9}
 .hidden{display:none}
-header{background:#1e40af;color:#fff;padding:12px;display:flex;align-items:center;justify-content:space-between}
-header img{height:45px;margin-right:15px}
+header{background:#1e40af;color:#fff;padding:12px;display:flex;justify-content:space-between;align-items:center}
+header img{height:45px;margin-right:10px}
 .container{padding:20px}
 .card{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,.1)}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
 th{background:#e5e7eb}
 input,select,button{padding:8px;margin:4px;width:100%}
-button{cursor:pointer;border:none;border-radius:6px}
+button{border:none;border-radius:6px;cursor:pointer}
 .primary{background:#2563eb;color:white}
-.danger{background:#dc2626;color:white}
 .success{background:#16a34a;color:white}
+.danger{background:#dc2626;color:white}
 .menu{display:flex;gap:10px;flex-wrap:wrap}
-#loginBox{max-width:420px;margin:60px auto;background:#fff;padding:30px;border-radius:12px;text-align:center}
-#loginBox img{height:90px;margin-bottom:10px}
-.logoutBtn{background:#f59e0b;color:white;padding:8px;border:none;border-radius:6px;cursor:pointer}
+
+#loginBox{
+max-width:420px;margin:80px auto;background:white;
+padding:30px;border-radius:12px;text-align:center
+}
+#loginBox img{height:80px;margin-bottom:10px}
+.logout{background:#f59e0b;color:white}
 </style>
 </head>
 
@@ -39,7 +42,7 @@ button{cursor:pointer;border:none;border-radius:6px}
 <button class="primary" onclick="login()">Login</button>
 </div>
 
-<!-- APP -->
+<!-- APLIKASI -->
 <div id="app" class="hidden">
 
 <header>
@@ -47,7 +50,7 @@ button{cursor:pointer;border:none;border-radius:6px}
 <img src="logo.png">
 <h3>Dashboard Inventaris</h3>
 </div>
-<button class="logoutBtn" onclick="logout()">Logout</button>
+<button class="logout" onclick="logout()">Logout</button>
 </header>
 
 <div class="container">
@@ -61,12 +64,10 @@ button{cursor:pointer;border:none;border-radius:6px}
 <div class="card hidden" id="masuk">
 <h3>Barang Masuk</h3>
 <input id="mBarang" placeholder="Nama Barang">
-
 <select id="mJenis">
 <option>Barang Modal</option>
 <option>BAJAS</option>
 </select>
-
 <select id="mDana">
 <option>BOSKAB 1</option>
 <option>BOSKAB 2</option>
@@ -74,57 +75,38 @@ button{cursor:pointer;border:none;border-radius:6px}
 <option>BOP 2</option>
 <option>Dana Lainnya</option>
 </select>
-
 <input type="number" id="mJumlah" placeholder="Jumlah">
-
 <select id="mSatuan">
-<option>rim</option><option>buah</option><option>pcs</option>
-<option>pack</option><option>kotak</option><option>biji</option>
-<option>set</option><option>lusin</option>
-<option>Botol</option><option>Paket</option>
-<option>Unit</option><option>Meter</option>
+<option>pcs</option><option>buah</option><option>rim</option>
+<option>pack</option><option>unit</option>
 </select>
-
-<button class="success" onclick="masukBarang()">Simpan</button>
+<button class="success" onclick="barangMasuk()">Simpan</button>
 </div>
 
 <!-- BARANG KELUAR -->
 <div class="card hidden" id="keluar">
 <h3>Barang Keluar</h3>
-
 <select id="kBarang"></select>
 <input type="number" id="kJumlah" placeholder="Jumlah">
-
 <select id="kSatuan">
-<option>rim</option><option>buah</option><option>pcs</option>
-<option>pack</option><option>kotak</option><option>biji</option>
-<option>set</option><option>lusin</option>
-<option>Botol</option><option>Paket</option>
-<option>Unit</option><option>Meter</option>
+<option>pcs</option><option>buah</option><option>rim</option>
+<option>pack</option><option>unit</option>
 </select>
-
 <select id="kJenis"></select>
 <select id="kDana"></select>
-
 <select id="kAmbil">
-<option>Bu Munawarah. S.Pd</option>
-<option>Bu Liliana Sataria. S.Kom</option>
-<option>Bu Fatimah. S.Pd</option>
-<option>Bu Fitriyana. S.Pd</option>
-<option>Bu Hirda Yulinalmi</option>
-<option>Bu Dwi Rika. S.Pd</option>
-<option>Bu Uut</option>
-<option>Pak Heri Sadiman. S.Pd</option>
-<option>Pak Jemidin. S.Pd., M.Pd</option>
+<option>Bu Munawarah</option>
+<option>Bu Liliana</option>
+<option>Bu Fatimah</option>
+<option>Pak Heri</option>
 <option>Pak Rehan</option>
 </select>
-
-<button class="danger" onclick="keluarBarang()">Simpan</button>
+<button class="danger" onclick="barangKeluar()">Simpan</button>
 </div>
 
 <!-- REKAP -->
 <div class="card">
-<h3>Rekap Stok</h3>
+<h3>Rekap Sisa Barang</h3>
 <table id="rekap"></table>
 </div>
 
@@ -135,170 +117,171 @@ button{cursor:pointer;border:none;border-radius:6px}
 </div>
 
 <!-- DOWNLOAD -->
+<div class="card">
+<h3>Download Excel</h3>
+<select id="fJenis"><option value="">Semua Jenis</option></select>
+<select id="fDana"><option value="">Semua Dana</option></select>
+<button class="primary" onclick="downloadExcel()">Download Excel</button>
+</div>
+
+</div>
+</div>
+
 <script>
-function downloadExcel(){
+const akun=[
+{u:'admin',p:'123'},
+{u:'operator',p:'123'}
+];
 
-const filtered = data.filter(d =>
- (!fJenis.value || d.jenis === fJenis.value) &&
- (!fDana.value || d.dana === fDana.value)
-);
+let data = JSON.parse(localStorage.getItem('inv')) || [];
 
-if(!filtered.length){
- alert('Data kosong');
- return;
+/* LOGIN */
+function login(){
+const u=user.value,p=pass.value;
+if(!akun.find(a=>a.u===u && a.p===p)) return alert('Login gagal');
+loginBox.style.display='none';
+app.classList.remove('hidden');
+render();
 }
 
-const masuk  = filtered.filter(d=>d.tipe==='Masuk');
-const keluar = filtered.filter(d=>d.tipe==='Keluar');
-
-let ws = XLSX.utils.aoa_to_sheet([]);
-
-/* =====================
-   TABEL BARANG MASUK
-===================== */
-XLSX.utils.sheet_add_aoa(ws,[
- ['DATA BARANG MASUK'],
- ['No','Nama Barang','Jumlah','Satuan','Jenis','Sumber Dana','Tanggal']
-],{origin:'A1'});
-
-masuk.forEach((d,i)=>{
- XLSX.utils.sheet_add_aoa(ws,[[
-  i+1,d.barang,d.jumlah,d.satuan,d.jenis,d.dana,d.tanggal
- ]],{origin:-1});
-});
-
-/* =====================
-   TABEL BARANG KELUAR
-===================== */
-let startKeluar = masuk.length + 4;
-
-XLSX.utils.sheet_add_aoa(ws,[
- [''],
- ['DATA BARANG KELUAR'],
- ['No','Nama Barang','Jumlah','Satuan','Jenis','Sumber Dana','Pengambil','Tanggal']
-],{origin:'A'+startKeluar});
-
-keluar.forEach((d,i)=>{
- XLSX.utils.sheet_add_aoa(ws,[[
-  i+1,d.barang,d.jumlah,d.satuan,d.jenis,d.dana,d.pengambilan,d.tanggal
- ]],{origin:-1});
-});
-
-/* =====================
-   REKAP SISA
-===================== */
-let map={};
-filtered.forEach(d=>{
- let k=d.barang+'|'+d.jenis+'|'+d.dana;
- if(!map[k]) map[k]={barang:d.barang,jenis:d.jenis,dana:d.dana,masuk:0,keluar:0};
- if(d.tipe==='Masuk')  map[k].masuk  += d.jumlah;
- if(d.tipe==='Keluar') map[k].keluar += d.jumlah;
-});
-
-XLSX.utils.sheet_add_aoa(ws,[
- [''],
- ['REKAP SISA BARANG'],
- ['Barang','Jenis','Dana','Total Masuk','Total Keluar','Sisa']
-],{origin:-1});
-
-Object.values(map).forEach(r=>{
- XLSX.utils.sheet_add_aoa(ws,[[
-  r.barang,r.jenis,r.dana,r.masuk,r.keluar,r.masuk-r.keluar
- ]],{origin:-1});
-});
-
-/* =====================
-   EXPORT
-===================== */
-let wb = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,ws,'Inventaris');
-XLSX.writeFile(wb,'Inventaris_SKB_Muara_Badak.xlsx');
-}
-</script>
-
-
-/* UPDATE */
-function updateAll(){
-updateDropdown();
-updateRekap();
-updateTabel();
-updateFilter();
+function logout(){
+app.classList.add('hidden');
+loginBox.style.display='block';
+user.value=pass.value='';
 }
 
-function updateDropdown(){
-kBarang.innerHTML='';
-kJenis.innerHTML='';
-kDana.innerHTML='';
-[...new Set(data.map(d=>d.barang))].forEach(v=>kBarang.innerHTML+=`<option>${v}</option>`);
-[...new Set(data.map(d=>d.jenis))].forEach(v=>kJenis.innerHTML+=`<option>${v}</option>`);
-[...new Set(data.map(d=>d.dana))].forEach(v=>kDana.innerHTML+=`<option>${v}</option>`);
+/* MENU */
+function show(id){
+['masuk','keluar'].forEach(x=>document.getElementById(x).classList.add('hidden'));
+document.getElementById(id).classList.remove('hidden');
 }
 
-function updateRekap(){
-let r='<tr><th>Barang</th><th>Jenis</th><th>Dana</th><th>Sisa</th></tr>';
-let map={};
+/* STOK */
+function stok(barang){
+let m=0,k=0;
 data.forEach(d=>{
-let k=d.barang+'|'+d.jenis+'|'+d.dana;
-if(!map[k]){
-map[k]=true;
-r+=`<tr><td>${d.barang}</td><td>${d.jenis}</td><td>${d.dana}</td><td>${stok(d.barang,d.jenis,d.dana)}</td></tr>`;
-}
+if(d.barang===barang && d.tipe==='Masuk') m+=d.jumlah;
+if(d.barang===barang && d.tipe==='Keluar') k+=d.jumlah;
 });
+return m-k;
+}
+
+/* BARANG MASUK */
+function barangMasuk(){
+if(!mBarang.value || !mJumlah.value) return alert('Lengkapi data');
+data.push({
+tipe:'Masuk',
+barang:mBarang.value,
+jumlah:+mJumlah.value,
+satuan:mSatuan.value,
+jenis:mJenis.value,
+dana:mDana.value,
+pengambilan:'',
+tanggal:new Date().toISOString().slice(0,10)
+});
+localStorage.setItem('inv',JSON.stringify(data));
+mBarang.value=mJumlah.value='';
+render();
+}
+
+/* BARANG KELUAR */
+function barangKeluar(){
+if(kJumlah.value>stok(kBarang.value)) return alert('Stok tidak cukup');
+data.push({
+tipe:'Keluar',
+barang:kBarang.value,
+jumlah:+kJumlah.value,
+satuan:kSatuan.value,
+jenis:kJenis.value,
+dana:kDana.value,
+pengambilan:kAmbil.value,
+tanggal:new Date().toISOString().slice(0,10)
+});
+localStorage.setItem('inv',JSON.stringify(data));
+kJumlah.value='';
+render();
+}
+
+/* RENDER */
+function render(){
+
+/* dropdown */
+kBarang.innerHTML='';
+[...new Set(data.map(d=>d.barang))].forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
+kJenis.innerHTML='';
+[...new Set(data.map(d=>d.jenis))].forEach(j=>kJenis.innerHTML+=`<option>${j}</option>`);
+kDana.innerHTML='';
+[...new Set(data.map(d=>d.dana))].forEach(d=>kDana.innerHTML+=`<option>${d}</option>`);
+
+/* rekap */
+let r='<tr><th>Barang</th><th>Sisa</th></tr>';
+[...new Set(data.map(d=>d.barang))].forEach(b=>r+=`<tr><td>${b}</td><td>${stok(b)}</td></tr>`);
 rekap.innerHTML=r;
-}
 
-function updateTabel(){
-let t='<tr><th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th><th>Satuan</th><th>Jenis</th><th>Dana</th><th>Pengambilan</th></tr>';
-data.forEach((d,i)=>{
-t+=`<tr><td>${i+1}</td><td>${d.tipe}</td><td>${d.barang}</td><td>${d.jumlah}</td><td>${d.satuan}</td><td>${d.jenis}</td><td>${d.dana}</td><td>${d.pengambilan||'-'}</td></tr>`;
-});
+/* tabel */
+let t='<tr><th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th><th>Jenis</th><th>Dana</th></tr>';
+data.forEach((d,i)=>t+=`<tr>
+<td>${i+1}</td><td>${d.tipe}</td><td>${d.barang}</td>
+<td>${d.jumlah}</td><td>${d.jenis}</td><td>${d.dana}</td>
+</tr>`);
 tabel.innerHTML=t;
-}
 
-function updateFilter(){
+/* filter */
 fJenis.innerHTML='<option value="">Semua Jenis</option>';
+[...new Set(data.map(d=>d.jenis))].forEach(j=>fJenis.innerHTML+=`<option>${j}</option>`);
 fDana.innerHTML='<option value="">Semua Dana</option>';
-[...new Set(data.map(d=>d.jenis))].forEach(v=>fJenis.innerHTML+=`<option>${v}</option>`);
-[...new Set(data.map(d=>d.dana))].forEach(v=>fDana.innerHTML+=`<option>${v}</option>`);
+[...new Set(data.map(d=>d.dana))].forEach(d=>fDana.innerHTML+=`<option>${d}</option>`);
 }
 
-/* DOWNLOAD EXCEL + REKAP */
+/* DOWNLOAD EXCEL FINAL */
 function downloadExcel(){
+
 let filtered=data.filter(d=>
-(!fTipe.value||d.tipe===fTipe.value)&&
 (!fJenis.value||d.jenis===fJenis.value)&&
 (!fDana.value||d.dana===fDana.value)
 );
+
 if(!filtered.length) return alert('Data kosong');
 
-let table=filtered.map((d,i)=>({
-No:i+1,Tipe:d.tipe,Barang:d.barang,Jumlah:d.jumlah,
-Satuan:d.satuan,Jenis:d.jenis,Dana:d.dana,Pengambilan:d.pengambilan||'-'
-}));
+let masuk=filtered.filter(d=>d.tipe==='Masuk');
+let keluar=filtered.filter(d=>d.tipe==='Keluar');
 
+let ws=XLSX.utils.aoa_to_sheet([]);
+
+/* MASUK */
+XLSX.utils.sheet_add_aoa(ws,[['DATA BARANG MASUK'],
+['No','Barang','Jumlah','Satuan','Jenis','Dana','Tanggal']],{origin:'A1'});
+masuk.forEach((d,i)=>XLSX.utils.sheet_add_aoa(ws,[[
+i+1,d.barang,d.jumlah,d.satuan,d.jenis,d.dana,d.tanggal
+]],{origin:-1}));
+
+/* KELUAR */
+let row=masuk.length+4;
+XLSX.utils.sheet_add_aoa(ws,[[''],['DATA BARANG KELUAR'],
+['No','Barang','Jumlah','Satuan','Jenis','Dana','Pengambil','Tanggal']],{origin:'A'+row});
+keluar.forEach((d,i)=>XLSX.utils.sheet_add_aoa(ws,[[
+i+1,d.barang,d.jumlah,d.satuan,d.jenis,d.dana,d.pengambilan,d.tanggal
+]],{origin:-1}));
+
+/* REKAP */
 let map={};
 filtered.forEach(d=>{
 let k=d.barang+'|'+d.jenis+'|'+d.dana;
-if(!map[k]) map[k]={Barang:d.barang,Jenis:d.jenis,Dana:d.dana,Masuk:0,Keluar:0};
-if(d.tipe==='Masuk') map[k].Masuk+=d.jumlah;
-if(d.tipe==='Keluar') map[k].Keluar+=d.jumlah;
+if(!map[k]) map[k]={b:d.barang,j:d.jenis,d:d.dana,m:0,k:0};
+d.tipe==='Masuk'?map[k].m+=d.jumlah:map[k].k+=d.jumlah;
 });
+XLSX.utils.sheet_add_aoa(ws,[[''],['REKAP SISA'],
+['Barang','Jenis','Dana','Masuk','Keluar','Sisa']],{origin:-1});
+Object.values(map).forEach(r=>XLSX.utils.sheet_add_aoa(ws,[[
+r.b,r.j,r.d,r.m,r.k,r.m-r.k
+]],{origin:-1}));
 
-let rekap=Object.values(map).map(r=>({
-Barang:r.Barang,Jenis:r.Jenis,Dana:r.Dana,
-'Total Masuk':r.Masuk,'Total Keluar':r.Keluar,Sisa:r.Masuk-r.Keluar
-}));
-
-let ws=XLSX.utils.json_to_sheet(table,{origin:'A1'});
-XLSX.utils.sheet_add_json(ws,rekap,{origin:'A'+(table.length+4)});
 let wb=XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,'Inventaris');
 XLSX.writeFile(wb,'Inventaris_SKB_Muara_Badak.xlsx');
 }
 
-updateAll();
+render();
 </script>
 </body>
 </html>
-
-
