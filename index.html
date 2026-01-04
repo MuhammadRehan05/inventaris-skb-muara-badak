@@ -6,37 +6,39 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-body{font-family:Arial;background:#f1f5f9;margin:0}
+body{font-family:Arial;margin:0;background:#f1f5f9}
 .hidden{display:none}
-header{background:#1e40af;color:#fff;padding:12px;display:flex;justify-content:space-between;align-items:center}
+header{background:#1e40af;color:#fff;padding:12px;display:flex;justify-content:space-between}
 .container{padding:20px}
-.card{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,.1)}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ddd;padding:6px;text-align:center}
+.card{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:8px;text-align:center}
 th{background:#e5e7eb}
-input,select,button{padding:6px;margin:4px;width:100%}
+input,select,button{padding:8px;margin:4px;width:100%}
 button{border:none;border-radius:6px;cursor:pointer}
 .primary{background:#2563eb;color:#fff}
 .success{background:#16a34a;color:#fff}
 .danger{background:#dc2626;color:#fff}
-.logout{background:#f59e0b;color:#fff}
-.menu{display:flex;gap:10px;flex-wrap:wrap}
+.menu{display:flex;gap:10px}
+#loginBox{max-width:400px;margin:40px auto;background:#fff;padding:20px;border-radius:12px;text-align:center}
 </style>
 </head>
 
 <body>
 
-<div id="loginBox" class="card" style="max-width:400px;margin:40px auto;text-align:center">
+<!-- LOGIN -->
+<div id="loginBox">
 <h3>Inventaris SKB Muara Badak</h3>
 <input id="user" placeholder="Username">
 <input id="pass" type="password" placeholder="Password">
 <button class="primary" onclick="login()">Login</button>
 </div>
 
+<!-- APP -->
 <div id="app" class="hidden">
 <header>
 <h3>Dashboard Inventaris</h3>
-<button class="logout" onclick="logout()">Logout</button>
+<button class="danger" onclick="logout()">Logout</button>
 </header>
 
 <div class="container">
@@ -50,45 +52,35 @@ button{border:none;border-radius:6px;cursor:pointer}
 <div class="card hidden" id="masuk">
 <h3>Barang Masuk</h3>
 <input id="mBarang" placeholder="Nama Barang">
-
-<select id="mJenis" multiple>
+<select id="mJenis">
 <option>Barang Modal</option>
 <option>BAJAS</option>
 </select>
-
-<select id="mDana" multiple>
+<select id="mDana">
 <option>BOSKAB 1</option>
 <option>BOSKAB 2</option>
 <option>BOP 1</option>
 <option>BOP 2</option>
-<option>Dana Lainnya</option>
 </select>
-
 <input type="number" id="mJumlah" placeholder="Jumlah">
-
 <select id="mSatuan">
-<option>rim</option><option>buah</option><option>pcs</option>
-<option>botol</option><option>paket</option><option>unit</option>
+<option>rim</option><option>buah</option><option>pack</option>
+<option>pcs</option><option>botol</option><option>unit</option>
 </select>
-
 <button class="success" onclick="barangMasuk()">Simpan</button>
 </div>
 
 <!-- BARANG KELUAR -->
 <div class="card hidden" id="keluar">
 <h3>Barang Keluar</h3>
-
-<select id="kBarang"></select>
+<select id="kBarang" onchange="isiJenisDana()"></select>
+<input id="kJenis" readonly placeholder="Jenis">
+<input id="kDana" readonly placeholder="Sumber Dana">
 <input type="number" id="kJumlah" placeholder="Jumlah">
-
 <select id="kSatuan">
-<option>rim</option><option>buah</option><option>pcs</option>
-<option>botol</option><option>paket</option><option>unit</option>
+<option>rim</option><option>buah</option><option>pack</option>
+<option>pcs</option><option>botol</option><option>unit</option>
 </select>
-
-<select id="kJenis" multiple></select>
-<select id="kDana" multiple></select>
-
 <select id="kAmbil">
 <option>Bu Munawarah. S.Pd</option>
 <option>Bu Liliana Sataria. S.Kom</option>
@@ -104,8 +96,8 @@ button{border:none;border-radius:6px;cursor:pointer}
 <option>Bu Jumriana. S.Pd</option>
 <option>Bu Devi Subhanatulaini. S.Pd</option>
 <option>Bu Rusdiana. S.Pd</option>
-</select>
 
+</select>
 <button class="danger" onclick="barangKeluar()">Simpan</button>
 </div>
 
@@ -117,113 +109,153 @@ button{border:none;border-radius:6px;cursor:pointer}
 
 <!-- DOWNLOAD -->
 <div class="card">
-<h3>Download Excel</h3>
-
+<h3>Download Excel (Rekap)</h3>
 <select id="fTipe">
 <option value="">Semua</option>
 <option value="Masuk">Barang Masuk</option>
 <option value="Keluar">Barang Keluar</option>
 </select>
-
-<select id="fJenis"></select>
-<select id="fDana"></select>
-
-<button class="primary" onclick="downloadExcel()">Download</button>
+<select id="fJenis">
+<option value="">Semua Jenis</option>
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
+<select id="fDana">
+<option value="">Semua Dana</option>
+<option>BOSKAB 1</option>
+<option>BOSKAB 2</option>
+<option>BOP 1</option>
+<option>BOP 2</option>
+</select>
+<button class="primary" onclick="downloadExcel()">Download Excel</button>
 </div>
 
 </div>
 </div>
 
 <script>
-let data=[];
+let data = JSON.parse(localStorage.getItem('inv')) || [];
 
 function login(){
-if(user.value && pass.value){
-loginBox.classList.add("hidden");
-app.classList.remove("hidden");
+  if(user.value && pass.value){
+    loginBox.classList.add('hidden');
+    app.classList.remove('hidden');
+    update();
+  }
 }
-}
+function logout(){ localStorage.clear(); location.reload(); }
 
-function logout(){location.reload()}
 function show(id){
-masuk.classList.add("hidden");
-keluar.classList.add("hidden");
-document.getElementById(id).classList.remove("hidden");
-}
-
-function multi(id){
-return [...document.getElementById(id).selectedOptions].map(o=>o.value);
+  masuk.classList.add('hidden');
+  keluar.classList.add('hidden');
+  document.getElementById(id).classList.remove('hidden');
 }
 
 function barangMasuk(){
-data.push({
-tipe:"Masuk",
-barang:mBarang.value,
-jenis:multi("mJenis"),
-dana:multi("mDana"),
-jumlah:mJumlah.value,
-satuan:mSatuan.value
-});
-update();
+  data.push({
+    tipe:'Masuk',
+    barang:mBarang.value,
+    jenis:mJenis.value,
+    dana:mDana.value,
+    jumlah:+mJumlah.value,
+    satuan:mSatuan.value
+  });
+  simpan();
+}
+
+function isiJenisDana(){
+  let d=data.find(x=>x.barang===kBarang.value && x.tipe==='Masuk');
+  if(d){ kJenis.value=d.jenis; kDana.value=d.dana; }
 }
 
 function barangKeluar(){
-data.push({
-tipe:"Keluar",
-barang:kBarang.value,
-jenis:multi("kJenis"),
-dana:multi("kDana"),
-jumlah:kJumlah.value,
-satuan:kSatuan.value,
-ambil:kAmbil.value
-});
-update();
+  data.push({
+    tipe:'Keluar',
+    barang:kBarang.value,
+    jenis:kJenis.value,
+    dana:kDana.value,
+    jumlah:+kJumlah.value,
+    satuan:kSatuan.value,
+    ambil:kAmbil.value
+  });
+  simpan();
+}
+
+function hapus(i){
+  if(confirm('Hapus data ini?')){
+    data.splice(i,1);
+    simpan();
+  }
+}
+
+function simpan(){
+  localStorage.setItem('inv',JSON.stringify(data));
+  update();
 }
 
 function update(){
-let t="<tr><th>Tipe</th><th>Barang</th><th>Jenis</th><th>Dana</th><th>Jumlah</th><th>Pengambil</th><th>Aksi</th></tr>";
-data.forEach((d,i)=>{
-t+=`<tr>
-<td>${d.tipe}</td>
-<td>${d.barang}</td>
-<td>${d.jenis.join(", ")}</td>
-<td>${d.dana.join(", ")}</td>
-<td>${d.jumlah} ${d.satuan}</td>
-<td>${d.ambil||""}</td>
-<td>${d.tipe=="Keluar"?`<button onclick="hapus(${i})">Hapus</button>`:""}</td>
-</tr>`;
-});
-tabel.innerHTML=t;
+  kBarang.innerHTML='';
+  [...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))]
+    .forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
 
-kBarang.innerHTML=[...new Set(data.filter(d=>d.tipe=="Masuk").map(d=>d.barang))]
-.map(b=>`<option>${b}</option>`).join("");
-
-kJenis.innerHTML=mJenis.innerHTML;
-kDana.innerHTML=mDana.innerHTML;
-fJenis.innerHTML='<option value="">Semua</option>'+mJenis.innerHTML;
-fDana.innerHTML='<option value="">Semua</option>'+mDana.innerHTML;
+  tabel.innerHTML='<tr><th>No</th><th>Tipe</th><th>Barang</th><th>Jenis</th><th>Dana</th><th>Jumlah</th><th>Satuan</th><th>Pengambil</th><th>Aksi</th></tr>';
+  data.forEach((d,i)=>{
+    tabel.innerHTML+=`
+    <tr>
+      <td>${i+1}</td>
+      <td>${d.tipe}</td>
+      <td>${d.barang}</td>
+      <td>${d.jenis||'-'}</td>
+      <td>${d.dana||'-'}</td>
+      <td>${d.jumlah}</td>
+      <td>${d.satuan}</td>
+      <td>${d.ambil||''}</td>
+      <td><button class="danger" onclick="hapus(${i})">Hapus</button></td>
+    </tr>`;
+  });
 }
 
-function hapus(i){data.splice(i,1);update()}
-
 function downloadExcel(){
-let tipe=fTipe.value, j=fJenis.value, d=fDana.value;
-let out=data.filter(x=>
-(!tipe||x.tipe==tipe)&&
-(!j||x.jenis.includes(j))&&
-(!d||x.dana.includes(d))
-).map(x=>({
-Tipe:x.tipe,
-Barang:x.barang,
-Jenis:x.jenis.join(", "),
-Dana:x.dana.join(", "),
-Jumlah:x.jumlah+" "+x.satuan,
-Pengambil:x.ambil||""
-}));
-let ws=XLSX.utils.json_to_sheet(out);
-let wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,ws,"Data");
-XLSX.writeFile(wb,"inventaris.xlsx");
+  let rekap = {};
+
+  data.forEach(d=>{
+    if(fTipe.value && d.tipe!==fTipe.value) return;
+    if(fJenis.value && d.jenis!==fJenis.value) return;
+    if(fDana.value && d.dana!==fDana.value) return;
+
+    let key = d.barang+'|'+d.jenis+'|'+d.dana;
+    if(!rekap[key]){
+      rekap[key]={
+        barang:d.barang,
+        jenis:d.jenis,
+        dana:d.dana,
+        masuk:0,
+        keluar:0,
+        satuan:d.satuan,
+        ambil:new Set()
+      };
+    }
+    if(d.tipe==='Masuk') rekap[key].masuk+=d.jumlah;
+    if(d.tipe==='Keluar'){
+      rekap[key].keluar+=d.jumlah;
+      if(d.ambil) rekap[key].ambil.add(d.ambil);
+    }
+  });
+
+  let hasil = Object.values(rekap).map(r=>({
+    Barang:r.barang,
+    Jenis:r.jenis,
+    "Sumber Dana":r.dana,
+    "Total Masuk":r.masuk+' '+r.satuan,
+    "Total Keluar":r.keluar+' '+r.satuan,
+    "Sisa":(r.masuk-r.keluar)+' '+r.satuan,
+    "Pengambilan":[...r.ambil].join(', ')
+  }));
+
+  let ws=XLSX.utils.json_to_sheet(hasil);
+  let wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Rekap');
+  XLSX.writeFile(wb,'Rekap_Inventaris_SKB.xlsx');
 }
 </script>
 
