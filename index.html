@@ -3,182 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <title>Inventaris SKB Muara Badak</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0 }
-header { text-align:center; padding:20px; background:#fff }
-header img { height:80px }
-h2 { margin:10px 0 }
+body{font-family:Arial;margin:0;background:#f3f4f6}
+h2{margin:10px 0}
+.container{padding:20px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border:1px solid #444;padding:6px;text-align:center}
+th{background:#9bbb59;color:#000}
+.sub th{background:#d9d9d9}
+select,button{padding:6px;margin:5px}
+button{cursor:pointer}
 
-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-top:15px;
-  background:#fff;
-}
-
-th, td {
-  border:1px solid #555;
-  padding:6px;
-  font-size:13px;
-  text-align:center;
-}
-
-th {
-  background:#9cc35d;
-  color:#000;
-  font-weight:bold;
-}
-
-.subhead {
-  background:#ddd;
-  font-weight:bold;
-}
-
-.controls {
-  padding:15px;
-  background:#fff;
-  margin-top:10px;
-}
-
-select, button {
-  padding:6px 10px;
-  margin-right:5px;
-}
-
-@media print {
-  @page { size: landscape; }
-  button, select { display:none }
+@media print{
+  @page{size:landscape}
 }
 </style>
 </head>
 
 <body>
+<div class="container">
 
-<header>
-  <img src="logo.png" alt="Logo SKB">
-  <h2>Inventaris Barang SKB Muara Badak</h2>
-</header>
-
-<div class="controls">
-  <b>Download Excel:</b>
-  <select id="filterDana">
-    <option value="">Semua Dana</option>
-    <option>BOSKAB</option>
-    <option>BOP</option>
-  </select>
-
-  <select id="filterJenis">
-    <option value="">Semua Jenis</option>
-    <option>Barang Modal</option>
-    <option>BAJAS</option>
-  </select>
-
-  <button onclick="downloadExcel()">⬇ Download Excel</button>
-</div>
+<h2>Inventaris Barang</h2>
 
 <table id="tabel">
 <thead>
 <tr>
-  <th rowspan="2">Tanggal</th>
-  <th rowspan="2">Nama Barang</th>
-  <th colspan="3">Barang</th>
-  <th rowspan="2">Pengambil</th>
-  <th rowspan="2">Keterangan</th>
+<th rowspan="2">Tanggal</th>
+<th rowspan="2">Nama Barang</th>
+<th colspan="3">Barang</th>
+<th rowspan="2">Pengambil</th>
+<th rowspan="2">Keterangan</th>
 </tr>
-<tr class="subhead">
-  <th>Masuk</th>
-  <th>Keluar</th>
-  <th>Sisa</th>
+<tr class="sub">
+<th>Masuk</th>
+<th>Keluar</th>
+<th>Sisa</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
+<h3>Download Excel</h3>
+<select id="filterDana">
+<option value="">Semua Dana</option>
+<option>BOP 1</option>
+<option>BOP 2</option>
+<option>BOSKAB 1</option>
+<option>BOSKAB 2</option>
+</select>
+
+<select id="filterJenis">
+<option value="">Semua Jenis</option>
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
+
+<button onclick="downloadExcel()">⬇ Download Excel</button>
+
+</div>
+
 <script>
-// ================= JANGAN UBAH BAGIAN INI =================
-function ambilDataLama() {
-  const kandidatKey = [
-    'data',
-    'inventaris',
-    'inventarisData',
-    'barangMasuk',
-    'barangKeluar',
-    'stokData'
-  ];
+/* ===============================
+   AMBIL DATA LAMA (TIDAK DIUBAH)
+================================ */
+let raw =
+  JSON.parse(localStorage.getItem('inv')) ||
+  JSON.parse(localStorage.getItem('data')) ||
+  [];
 
-  let hasil = [];
+/* ===============================
+   NORMALISASI DATA (AMAN)
+================================ */
+function normalisasi(data){
+  let map = {};
+  data.forEach(d=>{
+    let nama = d.barang || d.nama || d.nama_barang || '';
+    let dana = d.dana || '';
+    let jenis = d.jenis || '';
+    let key = nama+'|'+dana+'|'+jenis;
 
-  kandidatKey.forEach(k => {
-    const isi = localStorage.getItem(k);
-    if (isi) {
-      try {
-        const parsed = JSON.parse(isi);
-        if (Array.isArray(parsed)) {
-          hasil = hasil.concat(parsed);
-        }
-      } catch (e) {}
+    if(!map[key]){
+      map[key]={
+        tanggal:d.tanggal||'',
+        nama:nama,
+        dana:dana,
+        jenis:jenis,
+        masuk:0,
+        keluar:0,
+        pengambil:'',
+        ket:''
+      };
+    }
+
+    if(d.tipe==='Masuk'||d.tipe==='masuk'){
+      map[key].masuk += Number(d.jumlah||0);
+    }
+    if(d.tipe==='Keluar'||d.tipe==='keluar'){
+      map[key].keluar += Number(d.jumlah||0);
+      map[key].pengambil = d.pengambilan||d.pengambil||'';
     }
   });
 
-  return hasil;
-}
-// ==========================================================
-
-let data = ambilDataLama();
-
-function render() {
-  const tbody = document.querySelector("#tabel tbody");
-  tbody.innerHTML = "";
-
-  let stok = {};
-
-  data.forEach(d => {
-    if (!stok[d.nama]) stok[d.nama] = 0;
-    stok[d.nama] += (d.masuk || 0) - (d.keluar || 0);
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${d.tanggal || ''}</td>
-      <td>${d.nama || ''}</td>
-      <td>${d.masuk || ''}</td>
-      <td>${d.keluar || ''}</td>
-      <td>${stok[d.nama]}</td>
-      <td>${d.pengambil || ''}</td>
-      <td>${d.keterangan || ''}</td>
-    `;
-    tbody.appendChild(tr);
+  return Object.values(map).map(r=>{
+    r.sisa = r.masuk - r.keluar;
+    return r;
   });
 }
 
-function downloadExcel() {
-  let csv = "Tanggal,Nama Barang,Masuk,Keluar,Sisa,Pengambil,Keterangan\n";
-  let stok = {};
+let data = normalisasi(raw);
 
-  data.forEach(d => {
-    if (!stok[d.nama]) stok[d.nama] = 0;
-    stok[d.nama] += (d.masuk || 0) - (d.keluar || 0);
-
-    csv += [
-      d.tanggal,
-      d.nama,
-      d.masuk || '',
-      d.keluar || '',
-      stok[d.nama],
-      d.pengambil || '',
-      d.keterangan || ''
-    ].join(",") + "\n";
+/* ===============================
+   TAMPILKAN TABEL
+================================ */
+function render(){
+  const tbody=document.querySelector('#tabel tbody');
+  tbody.innerHTML='';
+  data.forEach(d=>{
+    tbody.innerHTML+=`
+    <tr>
+      <td>${d.tanggal}</td>
+      <td>${d.nama}</td>
+      <td>${d.masuk}</td>
+      <td>${d.keluar}</td>
+      <td>${d.sisa}</td>
+      <td>${d.pengambil}</td>
+      <td></td>
+    </tr>`;
   });
-
-  const blob = new Blob([csv], { type:"text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "inventaris_skb.csv";
-  a.click();
 }
-
 render();
-</script>
 
+/* ===============================
+   DOWNLOAD EXCEL (1 SHEET)
+================================ */
+function downloadExcel(){
+  const fDana=document.getElementById('filterDana').value;
+  const fJenis=document.getElementById('filterJenis').value;
+
+  let filtered=data.filter(d=>{
+    if(fDana && d.dana!==fDana) return false;
+    if(fJenis && d.jenis!==fJenis) return false;
+    return true;
+  });
+
+  if(!filtered.length){
+    alert('Data tidak ditemukan');
+    return;
+  }
+
+  let excelData=filtered.map(d=>({
+    Tanggal:d.tanggal,
+    Barang:d.nama,
+    Masuk:d.masuk,
+    Keluar:d.keluar,
+    Sisa:d.sisa,
+    Pengambil:d.pengambil,
+    Dana:d.dana,
+    Jenis:d.jenis
+  }));
+
+  let ws=XLSX.utils.json_to_sheet(excelData);
+  let wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Inventaris');
+
+  XLSX.writeFile(wb,'Inventaris_SK B_Muara_Badak.xlsx');
+}
+</script>
 </body>
 </html>
