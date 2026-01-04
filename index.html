@@ -295,45 +295,25 @@ function updateTabel(){
 /* ======================
    DOWNLOAD EXCEL
 ====================== */
-function downloadFilteredExcel(){
-  let t = fTipe.value;
-  let j = fJenisDownload.value;
-  let d = fDanaDownload.value;
+function isiFilterDownload(){
+  let jenisSet = new Set();
+  let danaSet  = new Set();
 
-  let hasil = data.filter(x =>
-    (!t || x.tipe === t) &&
-    (!j || x.jenis === j) &&
-    (!d || x.dana === d)
-  );
+  data.forEach(x=>{
+    if(x.jenis) jenisSet.add(x.jenis);
+    if(x.dana)  danaSet.add(x.dana);
+  });
 
-  if(!hasil.length){
-    alert('Data tidak ditemukan');
-    return;
-  }
+  fJenisDownload.innerHTML = '<option value="">Semua Jenis</option>';
+  fDanaDownload.innerHTML  = '<option value="">Semua Dana</option>';
 
-  // 🔒 PAKSA STRUKTUR KOLOM (INI KUNCI UTAMA)
-  let finalData = hasil.map((x,i)=>({
-    No: i+1,
-    Tipe: x.tipe,              // ⬅️ MASUK / KELUAR SELALU TERTULIS
-    Barang: x.barang,
-    Jumlah: x.jumlah,
-    Satuan: x.satuan,
-    Jenis: x.jenis,            // Barang Modal / BAJAS
-    Dana: x.dana,
-    Pengambilan: x.pengambilan || '-'
-  }));
+  [...jenisSet].forEach(j=>{
+    fJenisDownload.innerHTML += `<option value="${j}">${j}</option>`;
+  });
 
-  let ws = XLSX.utils.json_to_sheet(finalData);
-  let wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Inventaris');
-
-  let nama =
-    'Inventaris_' +
-    (t || 'SEMUA') + '_' +
-    (j || 'SEMUA') + '_' +
-    (d || 'SEMUA') + '.xlsx';
-
-  XLSX.writeFile(wb, nama);
+  [...danaSet].forEach(d=>{
+    fDanaDownload.innerHTML += `<option value="${d}">${d}</option>`;
+  });
 }
 
 
@@ -342,3 +322,4 @@ updateAll();
 
 </body>
 </html>
+
