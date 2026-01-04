@@ -8,18 +8,20 @@
 
 <style>
 body{font-family:Arial;background:#f1f5f9;margin:0;padding:20px}
-h2{margin-top:0}
-button{padding:12px;border:none;border-radius:8px;color:#fff;font-size:16px;cursor:pointer}
+h2,h3{margin:10px 0}
+.section{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,.1)}
+button{padding:12px 16px;border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;margin:5px}
 .btn-masuk{background:#2563eb}
 .btn-keluar{background:#dc2626}
 .btn-cetak{background:#16a34a}
 .btn-download{background:#1d4ed8}
-.section{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,.1)}
+select{padding:8px;margin:5px}
+
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{border:1px solid #333;padding:6px;text-align:center}
 th{background:#9bbb59}
 .sub th{background:#d9d9d9}
-select,input{padding:8px;width:100%;margin:4px 0}
+
 @media print{
   @page{size:landscape}
   button,select{display:none}
@@ -30,8 +32,8 @@ select,input{padding:8px;width:100%;margin:4px 0}
 <body>
 
 <div class="section">
-  <button class="btn-masuk" onclick="alert('Form masuk pakai sistem lama')">Barang Masuk</button>
-  <button class="btn-keluar" onclick="alert('Form keluar pakai sistem lama')">Barang Keluar</button>
+  <button class="btn-masuk">Barang Masuk</button>
+  <button class="btn-keluar">Barang Keluar</button>
   <button class="btn-cetak" onclick="window.print()">Cetak</button>
   <button class="btn-download" onclick="downloadExcel()">Download Excel</button>
 </div>
@@ -66,6 +68,7 @@ select,input{padding:8px;width:100%;margin:4px 0}
   <option>BOSKAB 2</option>
   <option>BOP 1</option>
   <option>BOP 2</option>
+  <option>Lainnya</option>
 </select>
 
 <select id="filterJenis">
@@ -76,50 +79,93 @@ select,input{padding:8px;width:100%;margin:4px 0}
 </div>
 
 <script>
-// ===============================
-// AMBIL DATA LAMA (AMAN)
-// ===============================
+/* ===============================
+   AMBIL SEMUA DATA LAMA (AMAN)
+================================ */
 let raw =
   JSON.parse(localStorage.getItem('inv')) ||
   JSON.parse(localStorage.getItem('inventaris')) ||
   JSON.parse(localStorage.getItem('barangMasuk')) ||
   [];
 
-// ===============================
-// REKAP BERDASARKAN BARANG+JENIS+DANA
-// ===============================
-function buildRekap(data){
+/* ===============================
+   NORMALISASI DATA LAMA
+   (INI KUNCI SUPAYA TIDAK SAMA LAGI)
+================================ */
+function normalize(d){
+  let x = {...d};
+
+  // pastikan jumlah angka
+  x.jumlah = Number(x.jumlah||0);
+
+  // tipe masuk / keluar
+  if(!x.tipe){
+    if((x.keterangan||'').toLowerCase().includes('keluar')){
+      x.tipe = 'Keluar';
+    } else {
+      x.tipe = 'Masuk';
+    }
+  }
+
+  // jenis barang
+  if(!x.jenis){
+    if((x.keterangan||'').toUpperCase().includes('BAJAS')){
+      x.jenis = 'BAJAS';
+    } else {
+      x.jenis = 'Barang Modal';
+    }
+  }
+
+  // dana
+  if(!x.dana){
+    let ket = (x.keterangan||'').toUpperCase();
+    if(ket.includes('BOSKAB 1')) x.dana='BOSKAB 1';
+    else if(ket.includes('BOSKAB 2')) x.dana='BOSKAB 2';
+    else if(ket.includes('BOP 1')) x.dana='BOP 1';
+    else if(ket.includes('BOP 2')) x.dana='BOP 2';
+    else x.dana='Lainnya';
+  }
+
+  // nama barang
+  x.barang = x.barang || x.nama_barang || 'Tidak diketahui';
+
+  // pengambil
+  x.pengambilan = x.pengambilan || '';
+
+  return x;
+}
+
+raw = raw.map(normalize);
+
+/* ===============================
+   REKAP MASUK / KELUAR / SISA
+================================ */
+function rekap(data){
   let map = {};
   data.forEach(d=>{
-    let barang = d.barang || d.nama_barang || '';
-    let jenis  = d.jenis || '';
-    let dana   = d.dana || '';
-    let key = barang+'|'+jenis+'|'+dana;
-
+    let key = d.barang+'|'+d.jenis+'|'+d.dana;
     if(!map[key]){
-      map[key]={barang,jenis,dana,masuk:0,keluar:0,pengambil:''};
+      map[key]={barang:d.barang,jenis:d.jenis,dana:d.dana,masuk:0,keluar:0,pengambil:''};
     }
-
-    if(d.tipe==='Masuk') map[key].masuk += Number(d.jumlah||0);
+    if(d.tipe==='Masuk') map[key].masuk += d.jumlah;
     if(d.tipe==='Keluar'){
-      map[key].keluar += Number(d.jumlah||0);
-      map[key].pengambil = d.pengambilan || '';
+      map[key].keluar += d.jumlah;
+      map[key].pengambil = d.pengambilan;
     }
   });
-
   return Object.values(map).map(r=>{
     r.sisa = r.masuk - r.keluar;
     return r;
   });
 }
 
-// ===============================
-// RENDER TABEL
-// ===============================
+/* ===============================
+   TAMPILKAN TABEL
+================================ */
 function render(){
   let tbody=document.getElementById('tabel');
   tbody.innerHTML='';
-  buildRekap(raw).forEach(r=>{
+  rekap(raw).forEach(r=>{
     tbody.innerHTML+=`
     <tr>
       <td></td>
@@ -127,21 +173,21 @@ function render(){
       <td>${r.masuk}</td>
       <td>${r.keluar}</td>
       <td>${r.sisa}</td>
-      <td>${r.pengambil}</td>
+      <td>${r.pengambil||''}</td>
       <td>${r.jenis} ${r.dana}</td>
     </tr>`;
   });
 }
 render();
 
-// ===============================
-// DOWNLOAD EXCEL (RAPI)
-// ===============================
+/* ===============================
+   DOWNLOAD EXCEL (SATU SHEET)
+================================ */
 function downloadExcel(){
   let fDana=document.getElementById('filterDana').value;
   let fJenis=document.getElementById('filterJenis').value;
 
-  let hasil=buildRekap(raw).filter(r=>{
+  let hasil = rekap(raw).filter(r=>{
     if(fDana && r.dana!==fDana) return false;
     if(fJenis && r.jenis!==fJenis) return false;
     return true;
@@ -152,7 +198,7 @@ function downloadExcel(){
     return;
   }
 
-  let excel=hasil.map(r=>({
+  let excel = hasil.map(r=>({
     Barang:r.barang,
     Masuk:r.masuk,
     Keluar:r.keluar,
@@ -162,11 +208,13 @@ function downloadExcel(){
     Dana:r.dana
   }));
 
-  let ws=XLSX.utils.json_to_sheet(excel);
+  let ws = XLSX.utils.json_to_sheet(excel);
   ws['!cols']=[{wpx:200},{},{},{},{},{},{}];
-  let wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Rekap Inventaris');
-  XLSX.writeFile(wb,'Inventaris_SKb_Muara_Badak.xlsx');
+
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Rekap Inventaris');
+
+  XLSX.writeFile(wb,'Inventaris_SKB_Muara_Badak_FINAL.xlsx');
 }
 </script>
 
