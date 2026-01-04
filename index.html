@@ -2,46 +2,77 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Inventaris SKB Muara Badak</title>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<title>Inventaris Barang SKB Muara Badak</title>
 
 <style>
-body{font-family:Arial;background:#f1f5f9;margin:0;padding:20px}
-h2,h3{margin:10px 0}
-.section{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,.1)}
-button{padding:12px 16px;border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;margin:5px}
-.btn-masuk{background:#2563eb}
-.btn-keluar{background:#dc2626}
-.btn-cetak{background:#16a34a}
-.btn-download{background:#1d4ed8}
-select{padding:8px;margin:5px}
+body{
+  font-family: Arial, sans-serif;
+  background:#f4f6f8;
+  margin:20px;
+}
 
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{border:1px solid #333;padding:6px;text-align:center}
-th{background:#9bbb59}
-.sub th{background:#d9d9d9}
+h2{margin-top:30px}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+}
+
+th,td{
+  border:1px solid #444;
+  padding:6px;
+  font-size:13px;
+  text-align:center;
+}
+
+th{
+  background:#a6c36f;
+}
+
+.subhead{
+  background:#ddd;
+  font-weight:bold;
+}
+
+.controls{
+  margin:15px 0;
+}
+
+button,select{
+  padding:8px 12px;
+  font-size:14px;
+}
 
 @media print{
-  @page{size:landscape}
-  button,select{display:none}
+  @page{ size: landscape; }
+  .controls{display:none}
 }
 </style>
 </head>
 
 <body>
 
-<div class="section">
-  <button class="btn-masuk">Barang Masuk</button>
-  <button class="btn-keluar">Barang Keluar</button>
-  <button class="btn-cetak" onclick="window.print()">Cetak</button>
-  <button class="btn-download" onclick="downloadExcel()">Download Excel</button>
+<h2>Inventaris Barang (Padat)</h2>
+
+<div class="controls">
+  <select id="filterDana">
+    <option value="">Semua Dana</option>
+    <option value="BOP">BOP</option>
+    <option value="BOSKAB">BOSKAB</option>
+  </select>
+
+  <select id="filterJenis">
+    <option value="">Semua Jenis</option>
+    <option value="MODAL">Barang Modal</option>
+    <option value="BAJAS">BAJAS</option>
+  </select>
+
+  <button onclick="downloadExcel()">⬇ Download Excel</button>
+  <button onclick="window.print()">🖨 Cetak</button>
 </div>
 
-<div class="section">
-<h2>Data Inventaris (Padat)</h2>
-
-<table>
+<table id="tabelInventaris">
 <thead>
 <tr>
   <th rowspan="2">Tanggal</th>
@@ -50,176 +81,93 @@ th{background:#9bbb59}
   <th rowspan="2">Pengambil</th>
   <th rowspan="2">Keterangan</th>
 </tr>
-<tr class="sub">
+<tr class="subhead">
   <th>Masuk</th>
   <th>Keluar</th>
   <th>Sisa</th>
 </tr>
 </thead>
-<tbody id="tabel"></tbody>
+<tbody></tbody>
 </table>
-</div>
-
-<div class="section">
-<h3>Filter Download</h3>
-<select id="filterDana">
-  <option value="">Semua Dana</option>
-  <option>BOSKAB 1</option>
-  <option>BOSKAB 2</option>
-  <option>BOP 1</option>
-  <option>BOP 2</option>
-  <option>Lainnya</option>
-</select>
-
-<select id="filterJenis">
-  <option value="">Semua Jenis</option>
-  <option>Barang Modal</option>
-  <option>BAJAS</option>
-</select>
-</div>
 
 <script>
 /* ===============================
-   AMBIL SEMUA DATA LAMA (AMAN)
-================================ */
-let raw =
-  JSON.parse(localStorage.getItem('inv')) ||
-  JSON.parse(localStorage.getItem('inventaris')) ||
-  JSON.parse(localStorage.getItem('barangMasuk')) ||
-  [];
+   AMBIL DATA LAMA (JANGAN DIUBAH)
+================================= */
+const DATA_KEY = "inventarisData";
 
 /* ===============================
-   NORMALISASI DATA LAMA
-   (INI KUNCI SUPAYA TIDAK SAMA LAGI)
-================================ */
-function normalize(d){
-  let x = {...d};
+   RENDER TABEL
+================================= */
+function renderTable(){
+  const data = JSON.parse(localStorage.getItem(DATA_KEY)) || [];
+  const tbody = document.querySelector("#tabelInventaris tbody");
+  tbody.innerHTML = "";
 
-  // pastikan jumlah angka
-  x.jumlah = Number(x.jumlah||0);
+  const dana = document.getElementById("filterDana").value;
+  const jenis = document.getElementById("filterJenis").value;
 
-  // tipe masuk / keluar
-  if(!x.tipe){
-    if((x.keterangan||'').toLowerCase().includes('keluar')){
-      x.tipe = 'Keluar';
-    } else {
-      x.tipe = 'Masuk';
-    }
-  }
-
-  // jenis barang
-  if(!x.jenis){
-    if((x.keterangan||'').toUpperCase().includes('BAJAS')){
-      x.jenis = 'BAJAS';
-    } else {
-      x.jenis = 'Barang Modal';
-    }
-  }
-
-  // dana
-  if(!x.dana){
-    let ket = (x.keterangan||'').toUpperCase();
-    if(ket.includes('BOSKAB 1')) x.dana='BOSKAB 1';
-    else if(ket.includes('BOSKAB 2')) x.dana='BOSKAB 2';
-    else if(ket.includes('BOP 1')) x.dana='BOP 1';
-    else if(ket.includes('BOP 2')) x.dana='BOP 2';
-    else x.dana='Lainnya';
-  }
-
-  // nama barang
-  x.barang = x.barang || x.nama_barang || 'Tidak diketahui';
-
-  // pengambil
-  x.pengambilan = x.pengambilan || '';
-
-  return x;
-}
-
-raw = raw.map(normalize);
-
-/* ===============================
-   REKAP MASUK / KELUAR / SISA
-================================ */
-function rekap(data){
-  let map = {};
   data.forEach(d=>{
-    let key = d.barang+'|'+d.jenis+'|'+d.dana;
-    if(!map[key]){
-      map[key]={barang:d.barang,jenis:d.jenis,dana:d.dana,masuk:0,keluar:0,pengambil:''};
-    }
-    if(d.tipe==='Masuk') map[key].masuk += d.jumlah;
-    if(d.tipe==='Keluar'){
-      map[key].keluar += d.jumlah;
-      map[key].pengambil = d.pengambilan;
-    }
-  });
-  return Object.values(map).map(r=>{
-    r.sisa = r.masuk - r.keluar;
-    return r;
+    if(dana && !d.keterangan?.includes(dana)) return;
+    if(jenis && !d.keterangan?.includes(jenis)) return;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${d.tanggal || ""}</td>
+      <td>${d.nama || ""}</td>
+      <td>${d.masuk || ""}</td>
+      <td>${d.keluar || ""}</td>
+      <td>${d.sisa || ""}</td>
+      <td>${d.pengambil || ""}</td>
+      <td>${d.keterangan || ""}</td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 
-/* ===============================
-   TAMPILKAN TABEL
-================================ */
-function render(){
-  let tbody=document.getElementById('tabel');
-  tbody.innerHTML='';
-  rekap(raw).forEach(r=>{
-    tbody.innerHTML+=`
-    <tr>
-      <td></td>
-      <td>${r.barang}</td>
-      <td>${r.masuk}</td>
-      <td>${r.keluar}</td>
-      <td>${r.sisa}</td>
-      <td>${r.pengambil||''}</td>
-      <td>${r.jenis} ${r.dana}</td>
-    </tr>`;
-  });
-}
-render();
+document.getElementById("filterDana").onchange = renderTable;
+document.getElementById("filterJenis").onchange = renderTable;
 
 /* ===============================
-   DOWNLOAD EXCEL (SATU SHEET)
-================================ */
-<script>
+   DOWNLOAD EXCEL (1 SHEET)
+================================= */
 function downloadExcel(){
-  const rows = document.querySelectorAll("#tabelInventaris tbody tr");
-  if(!rows.length){
-    alert("Tidak ada data");
-    return;
-  }
-
-  let excelData = [];
-
-  rows.forEach(tr=>{
-    let td = tr.querySelectorAll("td");
-    excelData.push({
-      "Tanggal": td[0].innerText,
-      "Nama Barang": td[1].innerText,
-      "Masuk": td[2].innerText,
-      "Keluar": td[3].innerText,
-      "Sisa": td[4].innerText,
-      "Pengambil": td[5].innerText,
-      "Keterangan": td[6].innerText
-    });
-  });
-
-  let ws = XLSX.utils.json_to_sheet(excelData);
-  ws["!cols"]=[
-    {wpx:120},{wpx:220},{wpx:90},{wpx:90},{wpx:90},{wpx:150},{wpx:160}
+  const data = JSON.parse(localStorage.getItem(DATA_KEY)) || [];
+  let rows = [
+    ["Tanggal","Nama Barang","Masuk","Keluar","Sisa","Pengambil","Keterangan"]
   ];
 
-  let wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Inventaris");
+  const dana = document.getElementById("filterDana").value;
+  const jenis = document.getElementById("filterJenis").value;
 
-  XLSX.writeFile(wb, "Inventaris_FINAL.xlsx");
+  data.forEach(d=>{
+    if(dana && !d.keterangan?.includes(dana)) return;
+    if(jenis && !d.keterangan?.includes(jenis)) return;
+
+    rows.push([
+      d.tanggal||"",
+      d.nama||"",
+      d.masuk||"",
+      d.keluar||"",
+      d.sisa||"",
+      d.pengambil||"",
+      d.keterangan||""
+    ]);
+  });
+
+  let csv = rows.map(r=>r.join("\t")).join("\n");
+  let blob = new Blob([csv],{type:"application/vnd.ms-excel"});
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "inventaris.xlsx";
+  a.click();
 }
-</script>
 
+/* ===============================
+   AUTO LOAD DATA LAMA
+================================= */
+document.addEventListener("DOMContentLoaded",renderTable);
+</script>
 
 </body>
 </html>
-
-
