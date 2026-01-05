@@ -75,25 +75,16 @@ button{border:none;border-radius:6px;cursor:pointer}
 <!-- BARANG KELUAR -->
 <div class="card hidden" id="keluar">
 <h3>Barang Keluar</h3>
-<select id="kBarang" onchange="isiJenisDana()"></select>
-<select id="mJenis">
-<option>Barang Modal</option>
-<option>BAJAS</option>
-</select>
-<select id="mDana">
-<option>BOSKAB 1</option>
-<option>BOSKAB 2</option>
-<option>BOP 1</option>
-<option>BOP 2</option>
-</select>
+<select id="kBarang"></select>
 <input type="number" id="kJumlah" placeholder="Jumlah">
 <select id="kSatuan">
-<option>rim</option><option>buah</option><option>pack</option>
-<option>pcs</option><option>botol</option><option>unit</option>
-<option>Kotak</option><option>Meter</option><option>Biji</option>
-<option>Set</option>
+<option>rim</option><option>buah</option><option>pcs</option>
+<option>pack</option><option>botol</option><option>unit</option>
+<option>Kotak</option><option>Meter</option><option>Biji</option><option>Set</option>
 </select>
-<select id="kAmbil">
+
+<input id="kAmbil" list="listAmbil" placeholder="Nama Pengambil">
+<datalist id="listAmbil">
 <option>Bu Munawarah. S.Pd</option>
 <option>Bu Liliana Sataria. S.Kom</option>
 <option>Bu Fatimah. S.Pd</option>
@@ -108,7 +99,8 @@ button{border:none;border-radius:6px;cursor:pointer}
 <option>Bu Jumriana. S.Pd</option>
 <option>Bu Devi Subhanatulaini. S.Pd</option>
 <option>Bu Rusdiana. S.Pd</option>
-</select>
+</datalist>
+
 <button class="danger" onclick="barangKeluar()">Simpan</button>
 </div>
 
@@ -272,6 +264,7 @@ function downloadExcel(){
 
 </body>
 </html>
+
 
 
 
