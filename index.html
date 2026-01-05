@@ -78,8 +78,17 @@ button{border:none;border-radius:6px;cursor:pointer}
 
 <select id="kBarang" onchange="isiJenisDana()"></select>
 
-<input id="kJenis" class="readonly" readonly placeholder="Jenis">
-<input id="kDana" class="readonly" readonly placeholder="Sumber Dana">
+<select id="kJenis">
+<option>Barang Modal</option>
+<option>BAJAS</option>
+</select>
+
+<select id="kDana">
+<option>BOSKAB 1</option>
+<option>BOSKAB 2</option>
+<option>BOP 1</option>
+<option>BOP 2</option>
+</select>
 
 <input type="number" id="kJumlah" placeholder="Jumlah">
 
@@ -266,6 +275,7 @@ function downloadExcel(){
 
 </body>
 </html>
+
 
 
 
