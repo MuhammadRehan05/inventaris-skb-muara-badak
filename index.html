@@ -75,8 +75,14 @@ button{border:none;border-radius:6px;cursor:pointer}
 <!-- BARANG KELUAR -->
 <div class="card hidden" id="keluar">
 <h3>Barang Keluar</h3>
-<select id="kBarang"></select>
+
+<select id="kBarang" onchange="isiJenisDana()"></select>
+
+<input id="kJenis" class="readonly" readonly placeholder="Jenis">
+<input id="kDana" class="readonly" readonly placeholder="Sumber Dana">
+
 <input type="number" id="kJumlah" placeholder="Jumlah">
+
 <select id="kSatuan">
 <option>rim</option><option>buah</option><option>pcs</option>
 <option>pack</option><option>botol</option><option>unit</option>
@@ -95,10 +101,6 @@ button{border:none;border-radius:6px;cursor:pointer}
 <option>Pak Heri Sadiman. S.Pd</option>
 <option>Pak Jemidin. S.Pd., M.Pd</option>
 <option>Pak Rehan</option>
-<option>Pak Yu'an Reski Pongbanga. S.M</option>
-<option>Bu Jumriana. S.Pd</option>
-<option>Bu Devi Subhanatulaini. S.Pd</option>
-<option>Bu Rusdiana. S.Pd</option>
 </datalist>
 
 <button class="danger" onclick="barangKeluar()">Simpan</button>
@@ -264,6 +266,7 @@ function downloadExcel(){
 
 </body>
 </html>
+
 
 
 
