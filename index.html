@@ -16,6 +16,7 @@ th,td{border:1px solid #ccc;padding:8px;text-align:center}
 th{background:#e5e7eb}
 input,select,button{padding:8px;margin:4px;width:100%}
 button{border:none;border-radius:6px;cursor:pointer}
+button:hover{opacity:0.85}
 .primary{background:#2563eb;color:#fff}
 .success{background:#16a34a;color:#fff}
 .danger{background:#dc2626;color:#fff}
@@ -46,6 +47,11 @@ button{border:none;border-radius:6px;cursor:pointer}
 <div class="card menu">
 <button class="primary" onclick="show('masuk')">Barang Masuk</button>
 <button class="danger" onclick="show('keluar')">Barang Keluar</button>
+</div>
+
+<!-- SEARCH -->
+<div class="card">
+<input id="search" placeholder="Cari barang..." onkeyup="update()">
 </div>
 
 <!-- BARANG MASUK -->
@@ -98,19 +104,7 @@ button{border:none;border-radius:6px;cursor:pointer}
 <option>Kotak</option><option>Meter</option><option>Biji</option><option>Set</option>
 </select>
 
-<input id="kAmbil" list="listAmbil" placeholder="Nama Pengambil">
-<datalist id="listAmbil">
-<option>Bu Munawarah. S.Pd</option>
-<option>Bu Liliana Sataria. S.Kom</option>
-<option>Bu Fatimah. S.Pd</option>
-<option>Bu Fitriyana. S.Pd</option>
-<option>Bu Hirda Yulinalmi</option>
-<option>Bu Dwi Rika. S.Pd</option>
-<option>Bu Uut</option>
-<option>Pak Heri Sadiman. S.Pd</option>
-<option>Pak Jemidin. S.Pd., M.Pd</option>
-<option>Pak Rehan</option>
-</datalist>
+<input id="kAmbil" placeholder="Nama Pengambil">
 
 <button class="danger" onclick="barangKeluar()">Simpan</button>
 </div>
@@ -123,24 +117,7 @@ button{border:none;border-radius:6px;cursor:pointer}
 
 <!-- DOWNLOAD -->
 <div class="card">
-<h3>Download Excel (Rekap)</h3>
-<select id="fTipe">
-<option value="">Semua</option>
-<option value="Masuk">Barang Masuk</option>
-<option value="Keluar">Barang Keluar</option>
-</select>
-<select id="fJenis">
-<option value="">Semua Jenis</option>
-<option>Barang Modal</option>
-<option>BAJAS</option>
-</select>
-<select id="fDana">
-<option value="">Semua Dana</option>
-<option>BOSKAB 1</option>
-<option>BOSKAB 2</option>
-<option>BOP 1</option>
-<option>BOP 2</option>
-</select>
+<h3>Download Excel</h3>
 <button class="primary" onclick="downloadExcel()">Download Excel</button>
 </div>
 
@@ -149,6 +126,9 @@ button{border:none;border-radius:6px;cursor:pointer}
 
 <script>
 let data = JSON.parse(localStorage.getItem('inv')) || [];
+let editIndex = null;
+
+function notif(p){ alert(p); }
 
 function login(){
   if(user.value && pass.value){
@@ -157,7 +137,11 @@ function login(){
     update();
   }
 }
-function logout(){ localStorage.clear(); location.reload(); }
+
+function logout(){
+  localStorage.clear();
+  location.reload();
+}
 
 function show(id){
   masuk.classList.add('hidden');
@@ -165,15 +149,32 @@ function show(id){
   document.getElementById(id).classList.remove('hidden');
 }
 
+function getStok(nama){
+  let masuk=0, keluar=0;
+  data.forEach(d=>{
+    if(d.barang===nama){
+      if(d.tipe==='Masuk') masuk+=d.jumlah;
+      if(d.tipe==='Keluar') keluar+=d.jumlah;
+    }
+  });
+  return masuk-keluar;
+}
+
 function barangMasuk(){
-  data.push({
+  if(!mBarang.value || !mJumlah.value) return notif("Isi lengkap!");
+
+  let obj={
     tipe:'Masuk',
     barang:mBarang.value,
     jenis:mJenis.value,
     dana:mDana.value,
     jumlah:+mJumlah.value,
     satuan:mSatuan.value
-  });
+  };
+
+  if(editIndex!=null) data[editIndex]=obj;
+  else data.push(obj);
+
   simpan();
 }
 
@@ -183,7 +184,13 @@ function isiJenisDana(){
 }
 
 function barangKeluar(){
-  data.push({
+  if(!kBarang.value || !kJumlah.value) return notif("Isi lengkap!");
+
+  if(kJumlah.value > getStok(kBarang.value)){
+    return notif("Stok tidak cukup!");
+  }
+
+  let obj={
     tipe:'Keluar',
     barang:kBarang.value,
     jenis:kJenis.value,
@@ -191,12 +198,39 @@ function barangKeluar(){
     jumlah:+kJumlah.value,
     satuan:kSatuan.value,
     ambil:kAmbil.value
-  });
+  };
+
+  if(editIndex!=null) data[editIndex]=obj;
+  else data.push(obj);
+
   simpan();
 }
 
+function edit(i){
+  let d=data[i];
+
+  if(d.tipe==='Masuk'){
+    show('masuk');
+    mBarang.value=d.barang;
+    mJenis.value=d.jenis;
+    mDana.value=d.dana;
+    mJumlah.value=d.jumlah;
+    mSatuan.value=d.satuan;
+  }else{
+    show('keluar');
+    kBarang.value=d.barang;
+    kJenis.value=d.jenis;
+    kDana.value=d.dana;
+    kJumlah.value=d.jumlah;
+    kSatuan.value=d.satuan;
+    kAmbil.value=d.ambil;
+  }
+
+  editIndex=i;
+}
+
 function hapus(i){
-  if(confirm('Hapus data ini?')){
+  if(confirm("Hapus data?")){
     data.splice(i,1);
     simpan();
   }
@@ -204,82 +238,47 @@ function hapus(i){
 
 function simpan(){
   localStorage.setItem('inv',JSON.stringify(data));
+  editIndex=null;
   update();
 }
 
 function update(){
   kBarang.innerHTML='';
   [...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))]
-    .forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
+  .forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
 
-  tabel.innerHTML='<tr><th>No</th><th>Tipe</th><th>Barang</th><th>Jenis</th><th>Dana</th><th>Jumlah</th><th>Satuan</th><th>Pengambil</th><th>Aksi</th></tr>';
+  let keyword = search.value ? search.value.toLowerCase() : "";
+
+  tabel.innerHTML=`<tr>
+  <th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th>
+  <th>Satuan</th><th>Sisa</th><th>Aksi</th></tr>`;
+
   data.forEach((d,i)=>{
+    if(!d.barang.toLowerCase().includes(keyword)) return;
+
     tabel.innerHTML+=`
     <tr>
       <td>${i+1}</td>
       <td>${d.tipe}</td>
       <td>${d.barang}</td>
-      <td>${d.jenis||'-'}</td>
-      <td>${d.dana||'-'}</td>
       <td>${d.jumlah}</td>
       <td>${d.satuan}</td>
-      <td>${d.ambil||''}</td>
-      <td><button class="danger" onclick="hapus(${i})">Hapus</button></td>
+      <td>${getStok(d.barang)} ${d.satuan}</td>
+      <td>
+        <button onclick="edit(${i})">Edit</button>
+        <button class="danger" onclick="hapus(${i})">Hapus</button>
+      </td>
     </tr>`;
   });
 }
 
 function downloadExcel(){
-  let rekap = {};
-
-  data.forEach(d=>{
-    if(fTipe.value && d.tipe!==fTipe.value) return;
-    if(fJenis.value && d.jenis!==fJenis.value) return;
-    if(fDana.value && d.dana!==fDana.value) return;
-
-    let key = d.barang+'|'+d.jenis+'|'+d.dana;
-    if(!rekap[key]){
-      rekap[key]={
-        barang:d.barang,
-        jenis:d.jenis,
-        dana:d.dana,
-        masuk:0,
-        keluar:0,
-        satuan:d.satuan,
-        ambil:new Set()
-      };
-    }
-    if(d.tipe==='Masuk') rekap[key].masuk+=d.jumlah;
-    if(d.tipe==='Keluar'){
-      rekap[key].keluar+=d.jumlah;
-      if(d.ambil) rekap[key].ambil.add(d.ambil);
-    }
-  });
-
-  let hasil = Object.values(rekap).map(r=>({
-    Barang:r.barang,
-    Jenis:r.jenis,
-    "Sumber Dana":r.dana,
-    "Total Masuk":r.masuk+' '+r.satuan,
-    "Total Keluar":r.keluar+' '+r.satuan,
-    "Sisa":(r.masuk-r.keluar)+' '+r.satuan,
-    "Pengambilan":[...r.ambil].join(', ')
-  }));
-
-  let ws=XLSX.utils.json_to_sheet(hasil);
+  let ws=XLSX.utils.json_to_sheet(data);
   let wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Rekap');
-  XLSX.writeFile(wb,'Rekap_Inventaris_SKB.xlsx');
+  XLSX.utils.book_append_sheet(wb,ws,'Data');
+  XLSX.writeFile(wb,'Inventaris.xlsx');
 }
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
