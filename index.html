@@ -149,15 +149,23 @@ function show(id){
   document.getElementById(id).classList.remove('hidden');
 }
 
-function getStok(nama){
-  let masuk=0, keluar=0;
+// ✅ FIX STOK (pakai semua parameter)
+function getStok(nama, jenis, dana, satuan){
+  let masuk = 0, keluar = 0;
+
   data.forEach(d=>{
-    if(d.barang===nama){
-      if(d.tipe==='Masuk') masuk+=d.jumlah;
-      if(d.tipe==='Keluar') keluar+=d.jumlah;
+    if(
+      d.barang === nama &&
+      d.jenis === jenis &&
+      d.dana === dana &&
+      d.satuan === satuan
+    ){
+      if(d.tipe === 'Masuk') masuk += d.jumlah;
+      if(d.tipe === 'Keluar') keluar += d.jumlah;
     }
   });
-  return masuk-keluar;
+
+  return masuk - keluar;
 }
 
 function barangMasuk(){
@@ -180,13 +188,24 @@ function barangMasuk(){
 
 function isiJenisDana(){
   let d=data.find(x=>x.barang===kBarang.value && x.tipe==='Masuk');
-  if(d){ kJenis.value=d.jenis; kDana.value=d.dana; }
+  if(d){
+    kJenis.value=d.jenis;
+    kDana.value=d.dana;
+    kSatuan.value=d.satuan;
+  }
 }
 
 function barangKeluar(){
   if(!kBarang.value || !kJumlah.value) return notif("Isi lengkap!");
 
-  if(kJumlah.value > getStok(kBarang.value)){
+  let stok = getStok(
+    kBarang.value,
+    kJenis.value,
+    kDana.value,
+    kSatuan.value
+  );
+
+  if(kJumlah.value > stok){
     return notif("Stok tidak cukup!");
   }
 
@@ -250,20 +269,24 @@ function update(){
   let keyword = search.value ? search.value.toLowerCase() : "";
 
   tabel.innerHTML=`<tr>
-  <th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th>
-  <th>Satuan</th><th>Sisa</th><th>Aksi</th></tr>`;
+  <th>No</th><th>Tipe</th><th>Barang</th><th>Jenis</th>
+  <th>Dana</th><th>Jumlah</th><th>Satuan</th><th>Sisa</th><th>Aksi</th></tr>`;
 
   data.forEach((d,i)=>{
     if(!d.barang.toLowerCase().includes(keyword)) return;
+
+    let stok = getStok(d.barang,d.jenis,d.dana,d.satuan);
 
     tabel.innerHTML+=`
     <tr>
       <td>${i+1}</td>
       <td>${d.tipe}</td>
       <td>${d.barang}</td>
+      <td>${d.jenis}</td>
+      <td>${d.dana}</td>
       <td>${d.jumlah}</td>
       <td>${d.satuan}</td>
-      <td>${getStok(d.barang)} ${d.satuan}</td>
+      <td>${stok} ${d.satuan}</td>
       <td>
         <button onclick="edit(${i})">Edit</button>
         <button class="danger" onclick="hapus(${i})">Hapus</button>
