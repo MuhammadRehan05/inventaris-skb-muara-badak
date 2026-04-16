@@ -55,11 +55,17 @@ button:hover{opacity:0.85}
 <option value="Keluar">Keluar</option>
 </select>
 
+<br><br>
+
+<!-- ✅ TOMBOL UPLOAD -->
+<label class="primary" style="display:inline-block;text-align:center;cursor:pointer">
+Upload Excel
+<input type="file" accept=".xlsx,.xls" onchange="importExcel(event)" hidden>
+</label>
+
 <button onclick="backup()">Backup JSON</button>
 <input type="file" onchange="restore(event)">
 
-<br><br>
-<input type="file" accept=".xlsx,.xls" onchange="importExcel(event)">
 <button class="danger" onclick="resetData()">Reset Data</button>
 </div>
 
@@ -114,16 +120,16 @@ button:hover{opacity:0.85}
 
 // AUTO BACKUP
 setInterval(()=>{
-  localStorage.setItem('backup_auto', JSON.stringify(data));
+localStorage.setItem('backup_auto', JSON.stringify(data));
 },3000);
 
-// LOAD + AUTO RESTORE
+// LOAD DATA
 let data = JSON.parse(localStorage.getItem('inv')) || [];
 let backup_auto = JSON.parse(localStorage.getItem('backup_auto'));
 
 if(data.length===0 && backup_auto){
-  data = backup_auto;
-  localStorage.setItem('inv', JSON.stringify(data));
+data = backup_auto;
+localStorage.setItem('inv', JSON.stringify(data));
 }
 
 function notif(p){alert(p)}
@@ -204,14 +210,6 @@ tanggal:new Date().toLocaleString()
 simpan();
 }
 
-// HAPUS
-function hapus(i){
-if(confirm("Hapus data?")){
-data.splice(i,1);
-simpan();
-}
-}
-
 // SIMPAN
 function simpan(){
 localStorage.setItem('inv',JSON.stringify(data));
@@ -231,7 +229,7 @@ let filter=filterTipe.value;
 tabel.innerHTML=`<tr>
 <th>No</th><th>Tanggal</th><th>Tipe</th>
 <th>Barang</th><th>Jenis</th><th>Dana</th>
-<th>Jumlah</th><th>Satuan</th><th>Sisa</th><th>Aksi</th></tr>`;
+<th>Jumlah</th><th>Satuan</th><th>Sisa</th></tr>`;
 
 data.slice().reverse().forEach((d,i)=>{
 
@@ -252,19 +250,15 @@ tabel.innerHTML+=`
 <td>${d.jumlah}</td>
 <td>${d.satuan}</td>
 <td>${stok} ${d.satuan}</td>
-<td>
-<button class="danger" onclick="hapus(${i})">Hapus</button>
-</td>
 </tr>`;
 });
 
 // RINGKASAN
 let sum={};
 data.forEach(d=>{
-let key=d.barang;
-if(!sum[key]) sum[key]=0;
-if(d.tipe==='Masuk') sum[key]+=d.jumlah;
-if(d.tipe==='Keluar') sum[key]-=d.jumlah;
+if(!sum[d.barang]) sum[d.barang]=0;
+if(d.tipe==='Masuk') sum[d.barang]+=d.jumlah;
+if(d.tipe==='Keluar') sum[d.barang]-=d.jumlah;
 });
 
 ringkasan.innerHTML='';
@@ -274,7 +268,7 @@ ringkasan.innerHTML+=`<p>${k}: ${sum[k]}</p>`;
 
 }
 
-// EXCEL DOWNLOAD
+// DOWNLOAD
 function downloadExcel(){
 let ws=XLSX.utils.json_to_sheet(data);
 let wb=XLSX.utils.book_new();
@@ -282,7 +276,7 @@ XLSX.utils.book_append_sheet(wb,ws,'Data');
 XLSX.writeFile(wb,'Inventaris.xlsx');
 }
 
-// 🔥 IMPORT EXCEL MASSAL
+// ✅ IMPORT SESUAI FILE KAMU
 function importExcel(e){
 let file = e.target.files[0];
 if(!file) return;
@@ -290,13 +284,18 @@ if(!file) return;
 let reader = new FileReader();
 
 reader.onload = function(evt){
+
+try{
 let dataExcel = new Uint8Array(evt.target.result);
 let workbook = XLSX.read(dataExcel,{type:'array'});
 
 let sheet = workbook.Sheets[workbook.SheetNames[0]];
-let json = XLSX.utils.sheet_to_json(sheet);
+let json = XLSX.utils.sheet_to_json(sheet,{defval:''});
 
-if(json.length===0) return alert("File kosong!");
+if(json.length===0){
+alert("File kosong!");
+return;
+}
 
 let mode = confirm("OK = TIMPA DATA\nCancel = TAMBAH DATA");
 
@@ -305,24 +304,30 @@ if(mode) data=[];
 let count=0;
 
 json.forEach(row=>{
-if(!row.Barang || !row.Jumlah) return;
+if(!row.barang || !row.jumlah) return;
 
 data.push({
-tipe:row.Tipe||'Masuk',
-barang:row.Barang,
-jenis:row.Jenis||'',
-dana:row.Dana||'',
-jumlah:+row.Jumlah||0,
-satuan:row.Satuan||'',
-ambil:row.Pengambil||'',
-tanggal:row.Tanggal||new Date().toLocaleString()
+tipe: row.tipe || 'Masuk',
+barang: row.barang,
+jenis: row.jenis || '',
+dana: row.dana || '',
+jumlah: Number(row.jumlah) || 0,
+satuan: row.satuan || 'pcs',
+ambil: row.ambil || '',
+tanggal: new Date().toLocaleString()
 });
 
 count++;
 });
 
 simpan();
-alert("Import berhasil: "+count+" data");
+alert("✅ Import berhasil: "+count+" data");
+
+}catch(err){
+alert("❌ Format file salah!");
+console.error(err);
+}
+
 };
 
 reader.readAsArrayBuffer(file);
@@ -344,7 +349,7 @@ let reader=new FileReader();
 reader.onload=function(){
 data=JSON.parse(reader.result);
 simpan();
-alert("Data berhasil dikembalikan!");
+alert("Data kembali!");
 }
 reader.readAsText(file);
 }
