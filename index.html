@@ -27,7 +27,6 @@ button:hover{opacity:0.85}
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginBox" style="max-width:400px;margin:40px auto;background:#fff;padding:20px;border-radius:12px;text-align:center">
 <h3>Inventaris SKB</h3>
 <input id="user" placeholder="User">
@@ -35,7 +34,6 @@ button:hover{opacity:0.85}
 <button class="primary" onclick="login()">Login</button>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
 <header>
 <h3>Dashboard Inventaris</h3>
@@ -65,26 +63,16 @@ button:hover{opacity:0.85}
 <button class="danger" onclick="resetData()">Reset Data</button>
 </div>
 
-<!-- RINGKASAN -->
 <div class="card">
 <h3>Ringkasan Stok</h3>
 <div id="ringkasan"></div>
 </div>
 
-<!-- MASUK -->
 <div class="card hidden" id="masuk">
 <h3>Barang Masuk</h3>
 <input id="mBarang" placeholder="Nama Barang">
-<select id="mJenis">
-<option>Barang Modal</option>
-<option>BAJAS</option>
-</select>
-<select id="mDana">
-<option>BOSKAB 1</option>
-<option>BOSKAB 2</option>
-<option>BOP 1</option>
-<option>BOP 2</option>
-</select>
+<select id="mJenis"><option>Barang Modal</option><option>BAJAS</option></select>
+<select id="mDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
 <input type="number" id="mJumlah" placeholder="Jumlah">
 <select id="mSatuan">
 <option>rim</option><option>buah</option><option>pack</option>
@@ -95,7 +83,6 @@ button:hover{opacity:0.85}
 <button class="success" onclick="barangMasuk()">Simpan</button>
 </div>
 
-<!-- KELUAR -->
 <div class="card hidden" id="keluar">
 <h3>Barang Keluar</h3>
 <select id="kBarang" onchange="isiJenisDana()"></select>
@@ -111,7 +98,6 @@ button:hover{opacity:0.85}
 <button class="danger" onclick="barangKeluar()">Simpan</button>
 </div>
 
-<!-- TABEL -->
 <div class="card">
 <h3>Data Inventaris</h3>
 <table id="tabel"></table>
@@ -126,12 +112,12 @@ button:hover{opacity:0.85}
 
 <script>
 
-// 🔥 AUTO BACKUP
+// AUTO BACKUP
 setInterval(()=>{
   localStorage.setItem('backup_auto', JSON.stringify(data));
 },3000);
 
-// 🔥 LOAD DATA + RESTORE
+// LOAD + AUTO RESTORE
 let data = JSON.parse(localStorage.getItem('inv')) || [];
 let backup_auto = JSON.parse(localStorage.getItem('backup_auto'));
 
@@ -139,8 +125,6 @@ if(data.length===0 && backup_auto){
   data = backup_auto;
   localStorage.setItem('inv', JSON.stringify(data));
 }
-
-let editIndex=null;
 
 function notif(p){alert(p)}
 
@@ -160,7 +144,7 @@ keluar.classList.add('hidden');
 document.getElementById(id).classList.remove('hidden');
 }
 
-// STOK FIX
+// STOK
 function getStok(nama,jenis,dana,satuan){
 let masuk=0,keluar=0;
 data.forEach(d=>{
@@ -176,7 +160,7 @@ return masuk-keluar;
 function barangMasuk(){
 if(!mBarang.value||!mJumlah.value) return notif("Isi lengkap!");
 
-let obj={
+data.push({
 tipe:'Masuk',
 barang:mBarang.value,
 jenis:mJenis.value,
@@ -184,10 +168,7 @@ dana:mDana.value,
 jumlah:+mJumlah.value,
 satuan:mSatuan.value,
 tanggal:new Date().toLocaleString()
-};
-
-if(editIndex!=null) data[editIndex]=obj;
-else data.push(obj);
+});
 
 simpan();
 }
@@ -209,7 +190,7 @@ if(!kBarang.value||!kJumlah.value) return notif("Isi lengkap!");
 let stok=getStok(kBarang.value,kJenis.value,kDana.value,kSatuan.value);
 if(kJumlah.value>stok) return notif("Stok tidak cukup!");
 
-let obj={
+data.push({
 tipe:'Keluar',
 barang:kBarang.value,
 jenis:kJenis.value,
@@ -218,10 +199,7 @@ jumlah:+kJumlah.value,
 satuan:kSatuan.value,
 ambil:kAmbil.value,
 tanggal:new Date().toLocaleString()
-};
-
-if(editIndex!=null) data[editIndex]=obj;
-else data.push(obj);
+});
 
 simpan();
 }
@@ -237,7 +215,6 @@ simpan();
 // SIMPAN
 function simpan(){
 localStorage.setItem('inv',JSON.stringify(data));
-editIndex=null;
 update();
 }
 
@@ -276,7 +253,7 @@ tabel.innerHTML+=`
 <td>${d.satuan}</td>
 <td>${stok} ${d.satuan}</td>
 <td>
-<button onclick="hapus(${i})">Hapus</button>
+<button class="danger" onclick="hapus(${i})">Hapus</button>
 </td>
 </tr>`;
 });
@@ -305,20 +282,30 @@ XLSX.utils.book_append_sheet(wb,ws,'Data');
 XLSX.writeFile(wb,'Inventaris.xlsx');
 }
 
-// IMPORT EXCEL
+// 🔥 IMPORT EXCEL MASSAL
 function importExcel(e){
-let file=e.target.files[0];
-let reader=new FileReader();
+let file = e.target.files[0];
+if(!file) return;
 
-reader.onload=function(evt){
-let dataExcel=new Uint8Array(evt.target.result);
-let workbook=XLSX.read(dataExcel,{type:'array'});
+let reader = new FileReader();
 
-let sheet=workbook.Sheets[workbook.SheetNames[0]];
-let json=XLSX.utils.sheet_to_json(sheet);
+reader.onload = function(evt){
+let dataExcel = new Uint8Array(evt.target.result);
+let workbook = XLSX.read(dataExcel,{type:'array'});
+
+let sheet = workbook.Sheets[workbook.SheetNames[0]];
+let json = XLSX.utils.sheet_to_json(sheet);
+
+if(json.length===0) return alert("File kosong!");
+
+let mode = confirm("OK = TIMPA DATA\nCancel = TAMBAH DATA");
+
+if(mode) data=[];
+
+let count=0;
 
 json.forEach(row=>{
-if(!row.Barang||!row.Jumlah) return;
+if(!row.Barang || !row.Jumlah) return;
 
 data.push({
 tipe:row.Tipe||'Masuk',
@@ -330,32 +317,34 @@ satuan:row.Satuan||'',
 ambil:row.Pengambil||'',
 tanggal:row.Tanggal||new Date().toLocaleString()
 });
+
+count++;
 });
 
 simpan();
-alert("Import Excel berhasil!");
+alert("Import berhasil: "+count+" data");
 };
 
 reader.readAsArrayBuffer(file);
 }
 
-// BACKUP JSON
+// BACKUP
 function backup(){
-let blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+let blob=new Blob([JSON.stringify(data)]);
 let a=document.createElement('a');
 a.href=URL.createObjectURL(blob);
 a.download="backup.json";
 a.click();
 }
 
-// RESTORE JSON
+// RESTORE
 function restore(e){
 let file=e.target.files[0];
 let reader=new FileReader();
 reader.onload=function(){
 data=JSON.parse(reader.result);
 simpan();
-alert("Data berhasil di-restore!");
+alert("Data berhasil dikembalikan!");
 }
 reader.readAsText(file);
 }
