@@ -22,6 +22,23 @@ button:hover{opacity:0.85}
 .success{background:#16a34a;color:#fff}
 .danger{background:#dc2626;color:#fff}
 .low{background:#fee2e2}
+
+/* MODAL */
+#modalEdit{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+display:flex;
+justify-content:center;
+align-items:center;
+}
+#modalEdit .box{
+background:#fff;
+padding:20px;
+border-radius:12px;
+width:300px;
+}
 </style>
 </head>
 
@@ -57,18 +74,18 @@ button:hover{opacity:0.85}
 
 <br><br>
 
-<label class="primary" style="display:inline-block;text-align:center;cursor:pointer">
+<label class="primary">
 Upload Excel
 <input type="file" accept=".xlsx,.xls" onchange="importExcel(event)" hidden>
 </label>
 
-<button onclick="backup()">Backup JSON</button>
+<button onclick="backup()">Backup</button>
 <input type="file" onchange="restore(event)">
-<button class="danger" onclick="resetData()">Reset Data</button>
+<button class="danger" onclick="resetData()">Reset</button>
 </div>
 
 <div class="card">
-<h3>Ringkasan Stok</h3>
+<h3>Ringkasan</h3>
 <div id="ringkasan"></div>
 </div>
 
@@ -78,11 +95,7 @@ Upload Excel
 <select id="mJenis"><option>Barang Modal</option><option>BAJAS</option></select>
 <select id="mDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
 <input type="number" id="mJumlah" placeholder="Jumlah">
-<select id="mSatuan">
-<option>rim</option><option>buah</option><option>pack</option>
-<option>pcs</option><option>botol</option><option>unit</option>
-<option>Kotak</option><option>Meter</option><option>Biji</option><option>Set</option>
-</select>
+<select id="mSatuan"><option>pcs</option><option>unit</option></select>
 <button class="success" onclick="barangMasuk()">Simpan</button>
 </div>
 
@@ -91,246 +104,173 @@ Upload Excel
 <select id="kBarang" onchange="isiJenisDana()"></select>
 <select id="kJenis"><option>Barang Modal</option><option>BAJAS</option></select>
 <select id="kDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
-<input type="number" id="kJumlah" placeholder="Jumlah">
-<select id="kSatuan">
-<option>rim</option><option>buah</option><option>pcs</option>
-<option>pack</option><option>botol</option><option>unit</option>
-<option>Kotak</option><option>Meter</option><option>Biji</option><option>Set</option>
-</select>
-<input id="kAmbil" placeholder="Nama Pengambil">
+<input type="number" id="kJumlah">
+<select id="kSatuan"><option>pcs</option><option>unit</option></select>
+<input id="kAmbil" placeholder="Pengambil">
 <button class="danger" onclick="barangKeluar()">Simpan</button>
 </div>
 
 <div class="card">
-<h3>Data Inventaris</h3>
+<h3>Data</h3>
 <table id="tabel"></table>
 </div>
 
 <div class="card">
 <h3>Download Excel</h3>
-
 <select id="downloadMode">
-<option value="all">Semua Data</option>
-<option value="masuk">Barang Masuk</option>
-<option value="keluar">Barang Keluar</option>
-
-<option value="boskab">Dana BOSKAB</option>
-<option value="bop">Dana BOP</option>
-
-<option value="masuk_boskab">Masuk BOSKAB</option>
-<option value="masuk_bop">Masuk BOP</option>
-
-<option value="keluar_boskab">Keluar BOSKAB</option>
-<option value="keluar_bop">Keluar BOP</option>
+<option value="all">Semua</option>
+<option value="masuk">Masuk</option>
+<option value="keluar">Keluar</option>
+<option value="boskab">BOSKAB</option>
+<option value="bop">BOP</option>
 </select>
-
-<button class="primary" onclick="downloadFilter()">Download Rekap</button>
-<button onclick="downloadExcel()">Download Lengkap</button>
+<button onclick="downloadFilter()">Download Rekap</button>
 </div>
 
+</div>
+</div>
+
+<!-- MODAL EDIT -->
+<div id="modalEdit" class="hidden">
+<div class="box">
+<h3>Edit Data</h3>
+
+<input id="eBarang">
+<select id="eJenis"><option>Barang Modal</option><option>BAJAS</option></select>
+<select id="eDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
+<input type="number" id="eJumlah">
+<select id="eSatuan"><option>pcs</option><option>unit</option></select>
+<input id="eAmbil" placeholder="Pengambil">
+
+<button class="success" onclick="simpanEdit()">Simpan</button>
+<button onclick="tutupModal()">Batal</button>
 </div>
 </div>
 
 <script>
 
 let data = JSON.parse(localStorage.getItem('inv')) || [];
+let editIndex=null;
 
-function login(){
-if(user.value && pass.value){
-loginBox.classList.add('hidden');
-app.classList.remove('hidden');
-update();
-}
-}
-
+function login(){loginBox.classList.add('hidden');app.classList.remove('hidden');update();}
 function logout(){localStorage.clear();location.reload();}
+function show(id){masuk.classList.add('hidden');keluar.classList.add('hidden');document.getElementById(id).classList.remove('hidden');}
 
-function show(id){
-masuk.classList.add('hidden');
-keluar.classList.add('hidden');
-document.getElementById(id).classList.remove('hidden');
+function getStok(n,j,d,s){
+let m=0,k=0;
+data.forEach(x=>{
+if(x.barang===n&&x.jenis===j&&x.dana===d&&x.satuan===s){
+if(x.tipe==='Masuk') m+=x.jumlah;
+if(x.tipe==='Keluar') k+=x.jumlah;
+}});
+return m-k;
 }
 
-function getStok(nama,jenis,dana,satuan){
-let masuk=0,keluar=0;
-data.forEach(d=>{
-if(d.barang===nama && d.jenis===jenis && d.dana===dana && d.satuan===satuan){
-if(d.tipe==='Masuk') masuk+=d.jumlah;
-if(d.tipe==='Keluar') keluar+=d.jumlah;
-}
-});
-return masuk-keluar;
-}
-
-// 🔥 REKAP (ANTI DOUBLE)
+// REKAP
 function rekapData(list){
-let map = {};
-
+let map={};
 list.forEach(d=>{
-let key = d.barang+"|"+d.jenis+"|"+d.dana+"|"+d.satuan;
-
-if(!map[key]){
-map[key]={
-barang:d.barang,
-jenis:d.jenis,
-dana:d.dana,
-satuan:d.satuan,
-masuk:0,
-keluar:0,
-sisa:0
-};
-}
-
+let key=d.barang+"|"+d.jenis+"|"+d.dana+"|"+d.satuan;
+if(!map[key]) map[key]={barang:d.barang,jenis:d.jenis,dana:d.dana,satuan:d.satuan,masuk:0,keluar:0,sisa:0};
 if(d.tipe==='Masuk') map[key].masuk+=d.jumlah;
 if(d.tipe==='Keluar') map[key].keluar+=d.jumlah;
 });
-
-return Object.values(map).map(d=>{
-d.sisa = d.masuk - d.keluar;
-return d;
-});
+return Object.values(map).map(d=>{d.sisa=d.masuk-d.keluar;return d;});
 }
 
 function barangMasuk(){
-if(!mBarang.value||!mJumlah.value) return alert("Isi lengkap!");
 data.push({tipe:'Masuk',barang:mBarang.value,jenis:mJenis.value,dana:mDana.value,jumlah:+mJumlah.value,satuan:mSatuan.value,tanggal:new Date().toLocaleString()});
 simpan();
 }
 
 function isiJenisDana(){
-let d=data.find(x=>x.barang===kBarang.value && x.tipe==='Masuk');
-if(d){
-kJenis.value=d.jenis;
-kDana.value=d.dana;
-kSatuan.value=d.satuan;
-}
+let d=data.find(x=>x.barang===kBarang.value);
+if(d){kJenis.value=d.jenis;kDana.value=d.dana;kSatuan.value=d.satuan;}
 }
 
 function barangKeluar(){
-if(!kBarang.value||!kJumlah.value) return alert("Isi lengkap!");
-let stok=getStok(kBarang.value,kJenis.value,kDana.value,kSatuan.value);
-if(kJumlah.value>stok) return alert("Stok tidak cukup!");
 data.push({tipe:'Keluar',barang:kBarang.value,jenis:kJenis.value,dana:kDana.value,jumlah:+kJumlah.value,satuan:kSatuan.value,ambil:kAmbil.value,tanggal:new Date().toLocaleString()});
 simpan();
 }
 
-function simpan(){
-localStorage.setItem('inv',JSON.stringify(data));
-update();
-}
+function simpan(){localStorage.setItem('inv',JSON.stringify(data));update();}
 
 function update(){
 
 kBarang.innerHTML='';
-[...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))]
-.forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
+[...new Set(data.map(d=>d.barang))].forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
 
-let keyword=search.value?search.value.toLowerCase():"";
-let filter=filterTipe.value;
-
-tabel.innerHTML=`<tr>
-<th>No</th><th>Tanggal</th><th>Tipe</th>
-<th>Barang</th><th>Jenis</th><th>Dana</th>
-<th>Jumlah</th><th>Satuan</th><th>Sisa</th></tr>`;
+tabel.innerHTML=`<tr><th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th><th>Sisa</th><th>Aksi</th></tr>`;
 
 data.slice().reverse().forEach((d,i)=>{
-if(filter && d.tipe!==filter) return;
-if(!d.barang.toLowerCase().includes(keyword)) return;
-
+let idx=data.length-1-i;
 let stok=getStok(d.barang,d.jenis,d.dana,d.satuan);
-let low=stok<=3?'class="low"':'';
 
 tabel.innerHTML+=`
-<tr ${low}>
+<tr>
 <td>${i+1}</td>
-<td>${d.tanggal||'-'}</td>
 <td>${d.tipe}</td>
 <td>${d.barang}</td>
-<td>${d.jenis}</td>
-<td>${d.dana}</td>
 <td>${d.jumlah}</td>
-<td>${d.satuan}</td>
-<td>${stok} ${d.satuan}</td>
+<td>${stok}</td>
+<td>
+<button onclick="openEdit(${idx})">Edit</button>
+<button onclick="hapusData(${idx})" class="danger">Hapus</button>
+</td>
 </tr>`;
 });
 
-let sum={};
-data.forEach(d=>{
-if(!sum[d.barang]) sum[d.barang]=0;
-if(d.tipe==='Masuk') sum[d.barang]+=d.jumlah;
-if(d.tipe==='Keluar') sum[d.barang]-=d.jumlah;
-});
-
-ringkasan.innerHTML='';
-for(let k in sum){
-ringkasan.innerHTML+=`<p>${k}: ${sum[k]}</p>`;
 }
 
+// EDIT MODAL
+function openEdit(i){
+editIndex=i;
+let d=data[i];
+modalEdit.classList.remove('hidden');
+eBarang.value=d.barang;
+eJenis.value=d.jenis;
+eDana.value=d.dana;
+eJumlah.value=d.jumlah;
+eSatuan.value=d.satuan;
+eAmbil.value=d.ambil||'';
 }
 
-// EXPORT REKAP
+function simpanEdit(){
+let d=data[editIndex];
+data[editIndex]={...d,barang:eBarang.value,jenis:eJenis.value,dana:eDana.value,jumlah:+eJumlah.value,satuan:eSatuan.value,ambil:eAmbil.value};
+simpan();
+tutupModal();
+}
+
+function tutupModal(){modalEdit.classList.add('hidden');}
+
+function hapusData(i){if(confirm("Hapus?")){data.splice(i,1);simpan();}}
+
+// EXPORT
 function downloadFilter(){
-let mode=document.getElementById('downloadMode').value;
-let hasil=[];
-
-if(mode==='all') hasil=data;
+let mode=downloadMode.value;
+let hasil=data;
 if(mode==='masuk') hasil=data.filter(d=>d.tipe==='Masuk');
 if(mode==='keluar') hasil=data.filter(d=>d.tipe==='Keluar');
 if(mode==='boskab') hasil=data.filter(d=>d.dana.includes('BOSKAB'));
 if(mode==='bop') hasil=data.filter(d=>d.dana.includes('BOP'));
-if(mode==='masuk_boskab') hasil=data.filter(d=>d.tipe==='Masuk' && d.dana.includes('BOSKAB'));
-if(mode==='masuk_bop') hasil=data.filter(d=>d.tipe==='Masuk' && d.dana.includes('BOP'));
-if(mode==='keluar_boskab') hasil=data.filter(d=>d.tipe==='Keluar' && d.dana.includes('BOSKAB'));
-if(mode==='keluar_bop') hasil=data.filter(d=>d.tipe==='Keluar' && d.dana.includes('BOP'));
 
-let rekap = rekapData(hasil);
-
-let ws=XLSX.utils.json_to_sheet(rekap);
+let ws=XLSX.utils.json_to_sheet(rekapData(hasil));
 let wb=XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,"Rekap");
-
-XLSX.writeFile(wb,`Inventaris_${mode}_REKAP.xlsx`);
-}
-
-// EXPORT FULL
-function downloadExcel(){
-let wb = XLSX.utils.book_new();
-
-XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rekapData(data)), "Semua");
-XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rekapData(data.filter(d=>d.tipe==='Masuk'))), "Masuk");
-XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rekapData(data.filter(d=>d.tipe==='Keluar'))), "Keluar");
-
-XLSX.writeFile(wb,'Inventaris_REKAP.xlsx');
+XLSX.writeFile(wb,'Inventaris.xlsx');
 }
 
 // IMPORT
 function importExcel(e){
 let file=e.target.files[0];
 let reader=new FileReader();
-
 reader.onload=function(evt){
 let wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array'});
-let sheet=wb.Sheets[wb.SheetNames[0]];
-let json=XLSX.utils.sheet_to_json(sheet,{defval:''});
-
-json.forEach(row=>{
-if(!row.barang||!row.jumlah) return;
-data.push({
-tipe:row.tipe||'Masuk',
-barang:row.barang,
-jenis:row.jenis||'',
-dana:row.dana||'',
-jumlah:Number(row.jumlah)||0,
-satuan:row.satuan||'pcs',
-ambil:row.ambil||'',
-tanggal:new Date().toLocaleString()
-});
-});
-
+let json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+json.forEach(r=>data.push(r));
 simpan();
-alert("Import berhasil!");
 };
-
 reader.readAsArrayBuffer(file);
 }
 
@@ -343,24 +283,13 @@ a.download="backup.json";
 a.click();
 }
 
-// RESTORE
 function restore(e){
-let file=e.target.files[0];
 let reader=new FileReader();
-reader.onload=function(){
-data=JSON.parse(reader.result);
-simpan();
-};
-reader.readAsText(file);
+reader.onload=()=>{data=JSON.parse(reader.result);simpan();};
+reader.readAsText(e.target.files[0]);
 }
 
-// RESET
-function resetData(){
-if(confirm("Hapus semua data?")){
-localStorage.removeItem('inv');
-location.reload();
-}
-}
+function resetData(){if(confirm("Reset?")){localStorage.clear();location.reload();}}
 
 </script>
 
