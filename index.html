@@ -64,7 +64,6 @@ Upload Excel
 
 <button onclick="backup()">Backup JSON</button>
 <input type="file" onchange="restore(event)">
-
 <button class="danger" onclick="resetData()">Reset Data</button>
 </div>
 
@@ -114,8 +113,15 @@ Upload Excel
 <option value="all">Semua Data</option>
 <option value="masuk">Barang Masuk</option>
 <option value="keluar">Barang Keluar</option>
-<option value="boskab">BOSKAB</option>
-<option value="bop">BOP</option>
+
+<option value="boskab">Dana BOSKAB</option>
+<option value="bop">Dana BOP</option>
+
+<option value="masuk_boskab">Masuk BOSKAB</option>
+<option value="masuk_bop">Masuk BOP</option>
+
+<option value="keluar_boskab">Keluar BOSKAB</option>
+<option value="keluar_bop">Keluar BOP</option>
 </select>
 
 <button class="primary" onclick="downloadFilter()">Download Sesuai Pilihan</button>
@@ -219,6 +225,7 @@ tabel.innerHTML+=`
 </tr>`;
 });
 
+// ringkasan
 let sum={};
 data.forEach(d=>{
 if(!sum[d.barang]) sum[d.barang]=0;
@@ -233,29 +240,50 @@ ringkasan.innerHTML+=`<p>${k}: ${sum[k]}</p>`;
 
 }
 
-// EXPORT MULTI SHEET
+// EXPORT MULTI SHEET + SISA
 function downloadExcel(){
+
 let wb = XLSX.utils.book_new();
 
-XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Semua");
-XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.filter(d=>d.tipe==='Masuk')), "Masuk");
-XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.filter(d=>d.tipe==='Keluar')), "Keluar");
-XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.filter(d=>d.dana.includes('BOSKAB'))), "BOSKAB");
-XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.filter(d=>d.dana.includes('BOP'))), "BOP");
+let dataWithStok = data.map(d=>{
+let stok = getStok(d.barang,d.jenis,d.dana,d.satuan);
+return {...d, sisa: stok};
+});
+
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataWithStok), "Semua");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataWithStok.filter(d=>d.tipe==='Masuk')), "Masuk");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataWithStok.filter(d=>d.tipe==='Keluar')), "Keluar");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataWithStok.filter(d=>d.dana.includes('BOSKAB'))), "BOSKAB");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataWithStok.filter(d=>d.dana.includes('BOP'))), "BOP");
 
 XLSX.writeFile(wb,'Inventaris_Lengkap.xlsx');
 }
 
-// EXPORT FILTER
+// EXPORT FILTER + SISA
 function downloadFilter(){
+
 let mode=document.getElementById('downloadMode').value;
+
+let dataWithStok = data.map(d=>{
+let stok = getStok(d.barang,d.jenis,d.dana,d.satuan);
+return {...d, sisa: stok};
+});
+
 let hasil=[];
 
-if(mode==='all') hasil=data;
-if(mode==='masuk') hasil=data.filter(d=>d.tipe==='Masuk');
-if(mode==='keluar') hasil=data.filter(d=>d.tipe==='Keluar');
-if(mode==='boskab') hasil=data.filter(d=>d.dana.includes('BOSKAB'));
-if(mode==='bop') hasil=data.filter(d=>d.dana.includes('BOP'));
+if(mode==='all') hasil=dataWithStok;
+
+if(mode==='masuk') hasil=dataWithStok.filter(d=>d.tipe==='Masuk');
+if(mode==='keluar') hasil=dataWithStok.filter(d=>d.tipe==='Keluar');
+
+if(mode==='boskab') hasil=dataWithStok.filter(d=>d.dana.includes('BOSKAB'));
+if(mode==='bop') hasil=dataWithStok.filter(d=>d.dana.includes('BOP'));
+
+if(mode==='masuk_boskab') hasil=dataWithStok.filter(d=>d.tipe==='Masuk' && d.dana.includes('BOSKAB'));
+if(mode==='masuk_bop') hasil=dataWithStok.filter(d=>d.tipe==='Masuk' && d.dana.includes('BOP'));
+
+if(mode==='keluar_boskab') hasil=dataWithStok.filter(d=>d.tipe==='Keluar' && d.dana.includes('BOSKAB'));
+if(mode==='keluar_bop') hasil=dataWithStok.filter(d=>d.tipe==='Keluar' && d.dana.includes('BOP'));
 
 let ws=XLSX.utils.json_to_sheet(hasil);
 let wb=XLSX.utils.book_new();
@@ -264,7 +292,7 @@ XLSX.utils.book_append_sheet(wb,ws,mode);
 XLSX.writeFile(wb,`Inventaris_${mode}.xlsx`);
 }
 
-// IMPORT EXCEL
+// IMPORT
 function importExcel(e){
 let file=e.target.files[0];
 let reader=new FileReader();
