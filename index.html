@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Inventaris SKB Muara Badak</title>
+<title>Inventaris SKB</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -21,23 +21,35 @@ button:hover{opacity:0.85}
 .primary{background:#2563eb;color:#fff}
 .success{background:#16a34a;color:#fff}
 .danger{background:#dc2626;color:#fff}
-.low{background:#fee2e2}
 
-/* MODAL */
+/* MODAL FIX */
 #modalEdit{
 position:fixed;
 top:0;left:0;
 width:100%;height:100%;
 background:rgba(0,0,0,0.5);
-display:flex;
 justify-content:center;
 align-items:center;
+z-index:999;
+display:none;
 }
+
+#modalEdit.show{
+display:flex;
+}
+
 #modalEdit .box{
 background:#fff;
 padding:20px;
 border-radius:12px;
 width:300px;
+}
+
+#modalEdit input,#modalEdit select{
+width:100%;
+margin-bottom:10px;
+padding:8px;
+box-sizing:border-box;
 }
 </style>
 </head>
@@ -59,91 +71,42 @@ width:300px;
 
 <div class="container">
 
-<div class="card menu">
-<button class="primary" onclick="show('masuk')">Barang Masuk</button>
-<button class="danger" onclick="show('keluar')">Barang Keluar</button>
+<div class="card">
+<input id="search" placeholder="Cari..." onkeyup="update()">
 </div>
 
 <div class="card">
-<input id="search" placeholder="Cari barang..." onkeyup="update()">
-<select id="filterTipe" onchange="update()">
-<option value="">Semua</option>
-<option value="Masuk">Masuk</option>
-<option value="Keluar">Keluar</option>
-</select>
-
-<br><br>
-
-<label class="primary">
-Upload Excel
-<input type="file" accept=".xlsx,.xls" onchange="importExcel(event)" hidden>
-</label>
-
-<button onclick="backup()">Backup</button>
-<input type="file" onchange="restore(event)">
-<button class="danger" onclick="resetData()">Reset</button>
-</div>
-
-<div class="card">
-<h3>Ringkasan</h3>
-<div id="ringkasan"></div>
-</div>
-
-<div class="card hidden" id="masuk">
 <h3>Barang Masuk</h3>
 <input id="mBarang" placeholder="Nama Barang">
-<select id="mJenis"><option>Barang Modal</option><option>BAJAS</option></select>
-<select id="mDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
-<input type="number" id="mJumlah" placeholder="Jumlah">
-<select id="mSatuan"><option>pcs</option><option>unit</option></select>
+<input id="mJumlah" type="number" placeholder="Jumlah">
 <button class="success" onclick="barangMasuk()">Simpan</button>
 </div>
 
-<div class="card hidden" id="keluar">
+<div class="card">
 <h3>Barang Keluar</h3>
-<select id="kBarang" onchange="isiJenisDana()"></select>
-<select id="kJenis"><option>Barang Modal</option><option>BAJAS</option></select>
-<select id="kDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
-<input type="number" id="kJumlah">
-<select id="kSatuan"><option>pcs</option><option>unit</option></select>
-<input id="kAmbil" placeholder="Pengambil">
+<select id="kBarang"></select>
+<input id="kJumlah" type="number">
 <button class="danger" onclick="barangKeluar()">Simpan</button>
 </div>
 
 <div class="card">
-<h3>Data</h3>
 <table id="tabel"></table>
 </div>
 
-<div class="card">
-<h3>Download Excel</h3>
-<select id="downloadMode">
-<option value="all">Semua</option>
-<option value="masuk">Masuk</option>
-<option value="keluar">Keluar</option>
-<option value="boskab">BOSKAB</option>
-<option value="bop">BOP</option>
-</select>
-<button onclick="downloadFilter()">Download Rekap</button>
-</div>
-
 </div>
 </div>
 
-<!-- MODAL EDIT -->
-<div id="modalEdit" class="hidden">
+<!-- MODAL -->
+<div id="modalEdit">
 <div class="box">
 <h3>Edit Data</h3>
 
 <input id="eBarang">
-<select id="eJenis"><option>Barang Modal</option><option>BAJAS</option></select>
-<select id="eDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
-<input type="number" id="eJumlah">
-<select id="eSatuan"><option>pcs</option><option>unit</option></select>
-<input id="eAmbil" placeholder="Pengambil">
+<input id="eJumlah" type="number">
 
 <button class="success" onclick="simpanEdit()">Simpan</button>
 <button onclick="tutupModal()">Batal</button>
+
 </div>
 </div>
 
@@ -152,59 +115,38 @@ Upload Excel
 let data = JSON.parse(localStorage.getItem('inv')) || [];
 let editIndex=null;
 
-function login(){loginBox.classList.add('hidden');app.classList.remove('hidden');update();}
+function login(){
+loginBox.classList.add('hidden');
+app.classList.remove('hidden');
+update();
+}
+
 function logout(){localStorage.clear();location.reload();}
-function show(id){masuk.classList.add('hidden');keluar.classList.add('hidden');document.getElementById(id).classList.remove('hidden');}
-
-function getStok(n,j,d,s){
-let m=0,k=0;
-data.forEach(x=>{
-if(x.barang===n&&x.jenis===j&&x.dana===d&&x.satuan===s){
-if(x.tipe==='Masuk') m+=x.jumlah;
-if(x.tipe==='Keluar') k+=x.jumlah;
-}});
-return m-k;
-}
-
-// REKAP
-function rekapData(list){
-let map={};
-list.forEach(d=>{
-let key=d.barang+"|"+d.jenis+"|"+d.dana+"|"+d.satuan;
-if(!map[key]) map[key]={barang:d.barang,jenis:d.jenis,dana:d.dana,satuan:d.satuan,masuk:0,keluar:0,sisa:0};
-if(d.tipe==='Masuk') map[key].masuk+=d.jumlah;
-if(d.tipe==='Keluar') map[key].keluar+=d.jumlah;
-});
-return Object.values(map).map(d=>{d.sisa=d.masuk-d.keluar;return d;});
-}
 
 function barangMasuk(){
-data.push({tipe:'Masuk',barang:mBarang.value,jenis:mJenis.value,dana:mDana.value,jumlah:+mJumlah.value,satuan:mSatuan.value,tanggal:new Date().toLocaleString()});
+data.push({tipe:'Masuk',barang:mBarang.value,jumlah:+mJumlah.value});
 simpan();
-}
-
-function isiJenisDana(){
-let d=data.find(x=>x.barang===kBarang.value);
-if(d){kJenis.value=d.jenis;kDana.value=d.dana;kSatuan.value=d.satuan;}
 }
 
 function barangKeluar(){
-data.push({tipe:'Keluar',barang:kBarang.value,jenis:kJenis.value,dana:kDana.value,jumlah:+kJumlah.value,satuan:kSatuan.value,ambil:kAmbil.value,tanggal:new Date().toLocaleString()});
+data.push({tipe:'Keluar',barang:kBarang.value,jumlah:+kJumlah.value});
 simpan();
 }
 
-function simpan(){localStorage.setItem('inv',JSON.stringify(data));update();}
+function simpan(){
+localStorage.setItem('inv',JSON.stringify(data));
+update();
+}
 
 function update(){
 
 kBarang.innerHTML='';
 [...new Set(data.map(d=>d.barang))].forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
 
-tabel.innerHTML=`<tr><th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th><th>Sisa</th><th>Aksi</th></tr>`;
+tabel.innerHTML=`<tr><th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th><th>Aksi</th></tr>`;
 
 data.slice().reverse().forEach((d,i)=>{
 let idx=data.length-1-i;
-let stok=getStok(d.barang,d.jenis,d.dana,d.satuan);
 
 tabel.innerHTML+=`
 <tr>
@@ -212,84 +154,48 @@ tabel.innerHTML+=`
 <td>${d.tipe}</td>
 <td>${d.barang}</td>
 <td>${d.jumlah}</td>
-<td>${stok}</td>
 <td>
 <button onclick="openEdit(${idx})">Edit</button>
 <button onclick="hapusData(${idx})" class="danger">Hapus</button>
 </td>
 </tr>`;
 });
-
 }
 
-// EDIT MODAL
+// MODAL
 function openEdit(i){
 editIndex=i;
 let d=data[i];
-modalEdit.classList.remove('hidden');
+
+modalEdit.classList.add('show');
+
 eBarang.value=d.barang;
-eJenis.value=d.jenis;
-eDana.value=d.dana;
 eJumlah.value=d.jumlah;
-eSatuan.value=d.satuan;
-eAmbil.value=d.ambil||'';
 }
 
 function simpanEdit(){
 let d=data[editIndex];
-data[editIndex]={...d,barang:eBarang.value,jenis:eJenis.value,dana:eDana.value,jumlah:+eJumlah.value,satuan:eSatuan.value,ambil:eAmbil.value};
+
+data[editIndex]={
+...d,
+barang:eBarang.value,
+jumlah:+eJumlah.value
+};
+
 simpan();
 tutupModal();
 }
 
-function tutupModal(){modalEdit.classList.add('hidden');}
-
-function hapusData(i){if(confirm("Hapus?")){data.splice(i,1);simpan();}}
-
-// EXPORT
-function downloadFilter(){
-let mode=downloadMode.value;
-let hasil=data;
-if(mode==='masuk') hasil=data.filter(d=>d.tipe==='Masuk');
-if(mode==='keluar') hasil=data.filter(d=>d.tipe==='Keluar');
-if(mode==='boskab') hasil=data.filter(d=>d.dana.includes('BOSKAB'));
-if(mode==='bop') hasil=data.filter(d=>d.dana.includes('BOP'));
-
-let ws=XLSX.utils.json_to_sheet(rekapData(hasil));
-let wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,ws,"Rekap");
-XLSX.writeFile(wb,'Inventaris.xlsx');
+function tutupModal(){
+modalEdit.classList.remove('show');
 }
 
-// IMPORT
-function importExcel(e){
-let file=e.target.files[0];
-let reader=new FileReader();
-reader.onload=function(evt){
-let wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array'});
-let json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-json.forEach(r=>data.push(r));
+function hapusData(i){
+if(confirm("Hapus data?")){
+data.splice(i,1);
 simpan();
-};
-reader.readAsArrayBuffer(file);
 }
-
-// BACKUP
-function backup(){
-let blob=new Blob([JSON.stringify(data)]);
-let a=document.createElement('a');
-a.href=URL.createObjectURL(blob);
-a.download="backup.json";
-a.click();
 }
-
-function restore(e){
-let reader=new FileReader();
-reader.onload=()=>{data=JSON.parse(reader.result);simpan();};
-reader.readAsText(e.target.files[0]);
-}
-
-function resetData(){if(confirm("Reset?")){localStorage.clear();location.reload();}}
 
 </script>
 
