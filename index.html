@@ -57,7 +57,6 @@ button:hover{opacity:0.85}
 
 <br><br>
 
-<!-- ✅ TOMBOL UPLOAD -->
 <label class="primary" style="display:inline-block;text-align:center;cursor:pointer">
 Upload Excel
 <input type="file" accept=".xlsx,.xls" onchange="importExcel(event)" hidden>
@@ -83,8 +82,7 @@ Upload Excel
 <select id="mSatuan">
 <option>rim</option><option>buah</option><option>pack</option>
 <option>pcs</option><option>botol</option><option>unit</option>
-<option>Kotak</option><option>Meter</option><option>Biji</option>
-<option>Set</option>
+<option>Kotak</option><option>Meter</option><option>Biji</option><option>Set</option>
 </select>
 <button class="success" onclick="barangMasuk()">Simpan</button>
 </div>
@@ -110,7 +108,18 @@ Upload Excel
 </div>
 
 <div class="card">
-<button class="primary" onclick="downloadExcel()">Download Excel</button>
+<h3>Download Excel</h3>
+
+<select id="downloadMode">
+<option value="all">Semua Data</option>
+<option value="masuk">Barang Masuk</option>
+<option value="keluar">Barang Keluar</option>
+<option value="boskab">BOSKAB</option>
+<option value="bop">BOP</option>
+</select>
+
+<button class="primary" onclick="downloadFilter()">Download Sesuai Pilihan</button>
+<button onclick="downloadExcel()">Download Lengkap (Multi Sheet)</button>
 </div>
 
 </div>
@@ -118,21 +127,7 @@ Upload Excel
 
 <script>
 
-// AUTO BACKUP
-setInterval(()=>{
-localStorage.setItem('backup_auto', JSON.stringify(data));
-},3000);
-
-// LOAD DATA
 let data = JSON.parse(localStorage.getItem('inv')) || [];
-let backup_auto = JSON.parse(localStorage.getItem('backup_auto'));
-
-if(data.length===0 && backup_auto){
-data = backup_auto;
-localStorage.setItem('inv', JSON.stringify(data));
-}
-
-function notif(p){alert(p)}
 
 function login(){
 if(user.value && pass.value){
@@ -150,7 +145,6 @@ keluar.classList.add('hidden');
 document.getElementById(id).classList.remove('hidden');
 }
 
-// STOK
 function getStok(nama,jenis,dana,satuan){
 let masuk=0,keluar=0;
 data.forEach(d=>{
@@ -162,24 +156,12 @@ if(d.tipe==='Keluar') keluar+=d.jumlah;
 return masuk-keluar;
 }
 
-// MASUK
 function barangMasuk(){
-if(!mBarang.value||!mJumlah.value) return notif("Isi lengkap!");
-
-data.push({
-tipe:'Masuk',
-barang:mBarang.value,
-jenis:mJenis.value,
-dana:mDana.value,
-jumlah:+mJumlah.value,
-satuan:mSatuan.value,
-tanggal:new Date().toLocaleString()
-});
-
+if(!mBarang.value||!mJumlah.value) return alert("Isi lengkap!");
+data.push({tipe:'Masuk',barang:mBarang.value,jenis:mJenis.value,dana:mDana.value,jumlah:+mJumlah.value,satuan:mSatuan.value,tanggal:new Date().toLocaleString()});
 simpan();
 }
 
-// AUTO ISI
 function isiJenisDana(){
 let d=data.find(x=>x.barang===kBarang.value && x.tipe==='Masuk');
 if(d){
@@ -189,34 +171,19 @@ kSatuan.value=d.satuan;
 }
 }
 
-// KELUAR
 function barangKeluar(){
-if(!kBarang.value||!kJumlah.value) return notif("Isi lengkap!");
-
+if(!kBarang.value||!kJumlah.value) return alert("Isi lengkap!");
 let stok=getStok(kBarang.value,kJenis.value,kDana.value,kSatuan.value);
-if(kJumlah.value>stok) return notif("Stok tidak cukup!");
-
-data.push({
-tipe:'Keluar',
-barang:kBarang.value,
-jenis:kJenis.value,
-dana:kDana.value,
-jumlah:+kJumlah.value,
-satuan:kSatuan.value,
-ambil:kAmbil.value,
-tanggal:new Date().toLocaleString()
-});
-
+if(kJumlah.value>stok) return alert("Stok tidak cukup!");
+data.push({tipe:'Keluar',barang:kBarang.value,jenis:kJenis.value,dana:kDana.value,jumlah:+kJumlah.value,satuan:kSatuan.value,ambil:kAmbil.value,tanggal:new Date().toLocaleString()});
 simpan();
 }
 
-// SIMPAN
 function simpan(){
 localStorage.setItem('inv',JSON.stringify(data));
 update();
 }
 
-// UPDATE
 function update(){
 
 kBarang.innerHTML='';
@@ -232,7 +199,6 @@ tabel.innerHTML=`<tr>
 <th>Jumlah</th><th>Satuan</th><th>Sisa</th></tr>`;
 
 data.slice().reverse().forEach((d,i)=>{
-
 if(filter && d.tipe!==filter) return;
 if(!d.barang.toLowerCase().includes(keyword)) return;
 
@@ -253,7 +219,6 @@ tabel.innerHTML+=`
 </tr>`;
 });
 
-// RINGKASAN
 let sum={};
 data.forEach(d=>{
 if(!sum[d.barang]) sum[d.barang]=0;
@@ -268,66 +233,63 @@ ringkasan.innerHTML+=`<p>${k}: ${sum[k]}</p>`;
 
 }
 
-// DOWNLOAD
+// EXPORT MULTI SHEET
 function downloadExcel(){
-let ws=XLSX.utils.json_to_sheet(data);
+let wb = XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Semua");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.filter(d=>d.tipe==='Masuk')), "Masuk");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.filter(d=>d.tipe==='Keluar')), "Keluar");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.filter(d=>d.dana.includes('BOSKAB'))), "BOSKAB");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.filter(d=>d.dana.includes('BOP'))), "BOP");
+
+XLSX.writeFile(wb,'Inventaris_Lengkap.xlsx');
+}
+
+// EXPORT FILTER
+function downloadFilter(){
+let mode=document.getElementById('downloadMode').value;
+let hasil=[];
+
+if(mode==='all') hasil=data;
+if(mode==='masuk') hasil=data.filter(d=>d.tipe==='Masuk');
+if(mode==='keluar') hasil=data.filter(d=>d.tipe==='Keluar');
+if(mode==='boskab') hasil=data.filter(d=>d.dana.includes('BOSKAB'));
+if(mode==='bop') hasil=data.filter(d=>d.dana.includes('BOP'));
+
+let ws=XLSX.utils.json_to_sheet(hasil);
 let wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,ws,'Data');
-XLSX.writeFile(wb,'Inventaris.xlsx');
+XLSX.utils.book_append_sheet(wb,ws,mode);
+
+XLSX.writeFile(wb,`Inventaris_${mode}.xlsx`);
 }
 
-// ✅ IMPORT SESUAI FILE KAMU
+// IMPORT EXCEL
 function importExcel(e){
-let file = e.target.files[0];
-if(!file) return;
+let file=e.target.files[0];
+let reader=new FileReader();
 
-let reader = new FileReader();
-
-reader.onload = function(evt){
-
-try{
-let dataExcel = new Uint8Array(evt.target.result);
-let workbook = XLSX.read(dataExcel,{type:'array'});
-
-let sheet = workbook.Sheets[workbook.SheetNames[0]];
-let json = XLSX.utils.sheet_to_json(sheet,{defval:''});
-
-if(json.length===0){
-alert("File kosong!");
-return;
-}
-
-let mode = confirm("OK = TIMPA DATA\nCancel = TAMBAH DATA");
-
-if(mode) data=[];
-
-let count=0;
+reader.onload=function(evt){
+let wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array'});
+let sheet=wb.Sheets[wb.SheetNames[0]];
+let json=XLSX.utils.sheet_to_json(sheet,{defval:''});
 
 json.forEach(row=>{
-if(!row.barang || !row.jumlah) return;
-
+if(!row.barang||!row.jumlah) return;
 data.push({
-tipe: row.tipe || 'Masuk',
-barang: row.barang,
-jenis: row.jenis || '',
-dana: row.dana || '',
-jumlah: Number(row.jumlah) || 0,
-satuan: row.satuan || 'pcs',
-ambil: row.ambil || '',
-tanggal: new Date().toLocaleString()
+tipe:row.tipe||'Masuk',
+barang:row.barang,
+jenis:row.jenis||'',
+dana:row.dana||'',
+jumlah:Number(row.jumlah)||0,
+satuan:row.satuan||'pcs',
+ambil:row.ambil||'',
+tanggal:new Date().toLocaleString()
 });
-
-count++;
 });
 
 simpan();
-alert("✅ Import berhasil: "+count+" data");
-
-}catch(err){
-alert("❌ Format file salah!");
-console.error(err);
-}
-
+alert("Import berhasil!");
 };
 
 reader.readAsArrayBuffer(file);
@@ -349,8 +311,7 @@ let reader=new FileReader();
 reader.onload=function(){
 data=JSON.parse(reader.result);
 simpan();
-alert("Data kembali!");
-}
+};
 reader.readAsText(file);
 }
 
