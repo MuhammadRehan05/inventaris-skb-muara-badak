@@ -108,6 +108,7 @@ Upload Excel
 
 <div class="card">
 <h3>Download Excel</h3>
+
 <select id="downloadMode">
 <option value="all">Semua Data</option>
 <option value="masuk">Barang Masuk</option>
@@ -119,6 +120,7 @@ Upload Excel
 <option value="keluar_boskab">Keluar BOSKAB</option>
 <option value="keluar_bop">Keluar BOP</option>
 </select>
+
 <button class="primary" onclick="downloadFilter()">Download Rekap</button>
 <button onclick="downloadExcel()">Download Lengkap</button>
 </div>
@@ -179,6 +181,19 @@ if(d.tipe==='Keluar') keluar+=d.jumlah;
 return masuk-keluar;
 }
 
+// REKAP
+function rekapData(list){
+let map={};
+list.forEach(d=>{
+let key=d.barang+"|"+d.jenis+"|"+d.dana+"|"+d.satuan;
+if(!map[key]) map[key]={barang:d.barang,jenis:d.jenis,dana:d.dana,satuan:d.satuan,masuk:0,keluar:0,sisa:0};
+if(d.tipe==='Masuk') map[key].masuk+=d.jumlah;
+if(d.tipe==='Keluar') map[key].keluar+=d.jumlah;
+});
+return Object.values(map).map(d=>{d.sisa=d.masuk-d.keluar;return d;});
+}
+
+// CRUD
 function barangMasuk(){
 if(!mBarang.value||!mJumlah.value) return alert("Isi lengkap!");
 data.push({tipe:'Masuk',barang:mBarang.value,jenis:mJenis.value,dana:mDana.value,jumlah:+mJumlah.value,satuan:mSatuan.value,tanggal:new Date().toLocaleString()});
@@ -187,11 +202,7 @@ simpan();
 
 function isiJenisDana(){
 let d=data.find(x=>x.barang===kBarang.value && x.tipe==='Masuk');
-if(d){
-kJenis.value=d.jenis;
-kDana.value=d.dana;
-kSatuan.value=d.satuan;
-}
+if(d){kJenis.value=d.jenis;kDana.value=d.dana;kSatuan.value=d.satuan;}
 }
 
 function barangKeluar(){
@@ -202,13 +213,10 @@ data.push({tipe:'Keluar',barang:kBarang.value,jenis:kJenis.value,dana:kDana.valu
 simpan();
 }
 
-function simpan(){
-localStorage.setItem('inv',JSON.stringify(data));
-update();
-}
+function simpan(){localStorage.setItem('inv',JSON.stringify(data));update();}
 
+// UPDATE UI
 function update(){
-
 kBarang.innerHTML='';
 [...new Set(data.filter(d=>d.tipe==='Masuk').map(d=>d.barang))]
 .forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
@@ -227,8 +235,7 @@ if(!d.barang.toLowerCase().includes(keyword)) return;
 
 let stok=getStok(d.barang,d.jenis,d.dana,d.satuan);
 let low=stok<=3?'class="low"':'';
-
-let idx = data.length-1-i;
+let idx=data.length-1-i;
 
 tabel.innerHTML+=`
 <tr ${low}>
@@ -255,57 +262,127 @@ if(!sum[d.barang]) sum[d.barang]=0;
 if(d.tipe==='Masuk') sum[d.barang]+=d.jumlah;
 if(d.tipe==='Keluar') sum[d.barang]-=d.jumlah;
 });
-
 ringkasan.innerHTML='';
-for(let k in sum){
-ringkasan.innerHTML+=`<p>${k}: ${sum[k]}</p>`;
-}
-
+for(let k in sum){ringkasan.innerHTML+=`<p>${k}: ${sum[k]}</p>`;}
 }
 
 // EDIT
-function openEdit(index){
-editIndex=index;
-let d=data[index];
-
+function openEdit(i){
+editIndex=i;
+let d=data[i];
 modalEdit.style.display="flex";
-
 eBarang.value=d.barang;
 eJenis.value=d.jenis;
 eDana.value=d.dana;
 eJumlah.value=d.jumlah;
 eSatuan.value=d.satuan;
 eAmbil.value=d.ambil||'';
-
 eAmbil.style.display = d.tipe==='Keluar' ? 'block':'none';
 }
 
 function simpanEdit(){
 let d=data[editIndex];
-
-data[editIndex]={
-...d,
-barang:eBarang.value,
-jenis:eJenis.value,
-dana:eDana.value,
-jumlah:Number(eJumlah.value),
-satuan:eSatuan.value,
-ambil:d.tipe==='Keluar'?eAmbil.value:''
-};
-
+data[editIndex]={...d,barang:eBarang.value,jenis:eJenis.value,dana:eDana.value,jumlah:Number(eJumlah.value),satuan:eSatuan.value,ambil:d.tipe==='Keluar'?eAmbil.value:''};
 simpan();
 tutupModal();
 }
 
-function tutupModal(){
-modalEdit.style.display="none";
-editIndex=null;
+function tutupModal(){modalEdit.style.display="none";editIndex=null;}
+
+function hapusData(i){
+if(confirm("Yakin hapus data?")){
+data.splice(i,1);
+simpan();
+}
 }
 
-function hapusData(index){
-if(confirm("Yakin hapus data?")){
-data.splice(index,1);
+// EXPORT
+function downloadFilter(){
+if(data.length===0){alert("Data kosong!");return;}
+
+let mode=document.getElementById('downloadMode').value;
+let hasil=[];
+
+if(mode==='all') hasil=data;
+if(mode==='masuk') hasil=data.filter(d=>d.tipe==='Masuk');
+if(mode==='keluar') hasil=data.filter(d=>d.tipe==='Keluar');
+if(mode==='boskab') hasil=data.filter(d=>d.dana.includes('BOSKAB'));
+if(mode==='bop') hasil=data.filter(d=>d.dana.includes('BOP'));
+if(mode==='masuk_boskab') hasil=data.filter(d=>d.tipe==='Masuk' && d.dana.includes('BOSKAB'));
+if(mode==='masuk_bop') hasil=data.filter(d=>d.tipe==='Masuk' && d.dana.includes('BOP'));
+if(mode==='keluar_boskab') hasil=data.filter(d=>d.tipe==='Keluar' && d.dana.includes('BOSKAB'));
+if(mode==='keluar_bop') hasil=data.filter(d=>d.tipe==='Keluar' && d.dana.includes('BOP'));
+
+let ws=XLSX.utils.json_to_sheet(rekapData(hasil));
+let wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,"Rekap");
+XLSX.writeFile(wb,`Inventaris_${mode}.xlsx`);
+}
+
+function downloadExcel(){
+if(data.length===0){alert("Data kosong!");return;}
+
+let wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rekapData(data)), "Semua");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rekapData(data.filter(d=>d.tipe==='Masuk'))), "Masuk");
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rekapData(data.filter(d=>d.tipe==='Keluar'))), "Keluar");
+XLSX.writeFile(wb,'Inventaris_Lengkap.xlsx');
+}
+
+// IMPORT
+function importExcel(e){
+let file=e.target.files[0];
+let reader=new FileReader();
+reader.onload=function(evt){
+let wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array'});
+let sheet=wb.Sheets[wb.SheetNames[0]];
+let json=XLSX.utils.sheet_to_json(sheet,{defval:''});
+
+json.forEach(row=>{
+if(!row.barang||!row.jumlah) return;
+data.push({
+tipe:row.tipe||'Masuk',
+barang:row.barang,
+jenis:row.jenis||'',
+dana:row.dana||'',
+jumlah:Number(row.jumlah)||0,
+satuan:row.satuan||'pcs',
+ambil:row.ambil||'',
+tanggal:new Date().toLocaleString()
+});
+});
+
 simpan();
+alert("Import berhasil!");
+};
+reader.readAsArrayBuffer(file);
+}
+
+// BACKUP
+function backup(){
+let blob=new Blob([JSON.stringify(data)]);
+let a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download="backup.json";
+a.click();
+}
+
+// RESTORE
+function restore(e){
+let file=e.target.files[0];
+let reader=new FileReader();
+reader.onload=function(){
+data=JSON.parse(reader.result);
+simpan();
+};
+reader.readAsText(file);
+}
+
+// RESET
+function resetData(){
+if(confirm("Hapus semua data?")){
+localStorage.removeItem('inv');
+location.reload();
 }
 }
 
