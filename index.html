@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Inventaris SKB</title>
+<title>Inventaris SKB Muara Badak</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -21,6 +21,7 @@ button:hover{opacity:0.85}
 .primary{background:#2563eb;color:#fff}
 .success{background:#16a34a;color:#fff}
 .danger{background:#dc2626;color:#fff}
+.low{background:#fee2e2}
 
 /* MODAL FIX */
 #modalEdit{
@@ -28,10 +29,10 @@ position:fixed;
 top:0;left:0;
 width:100%;height:100%;
 background:rgba(0,0,0,0.5);
+display:none;
 justify-content:center;
 align-items:center;
 z-index:999;
-display:none;
 }
 
 #modalEdit.show{
@@ -56,6 +57,7 @@ box-sizing:border-box;
 
 <body>
 
+<!-- LOGIN -->
 <div id="loginBox" style="max-width:400px;margin:40px auto;background:#fff;padding:20px;border-radius:12px;text-align:center">
 <h3>Inventaris SKB</h3>
 <input id="user" placeholder="User">
@@ -63,7 +65,9 @@ box-sizing:border-box;
 <button class="primary" onclick="login()">Login</button>
 </div>
 
+<!-- APP -->
 <div id="app" class="hidden">
+
 <header>
 <h3>Dashboard Inventaris</h3>
 <button class="danger" onclick="logout()">Logout</button>
@@ -71,24 +75,52 @@ box-sizing:border-box;
 
 <div class="container">
 
+<!-- MENU -->
 <div class="card">
-<input id="search" placeholder="Cari..." onkeyup="update()">
+<button class="primary" onclick="show('masuk')">Barang Masuk</button>
+<button class="danger" onclick="show('keluar')">Barang Keluar</button>
 </div>
 
+<!-- FILTER -->
 <div class="card">
+<input id="search" placeholder="Cari barang..." onkeyup="update()">
+<select id="filterTipe" onchange="update()">
+<option value="">Semua</option>
+<option value="Masuk">Masuk</option>
+<option value="Keluar">Keluar</option>
+</select>
+</div>
+
+<!-- RINGKASAN -->
+<div class="card">
+<h3>Ringkasan Stok</h3>
+<div id="ringkasan"></div>
+</div>
+
+<!-- MASUK -->
+<div class="card hidden" id="masuk">
 <h3>Barang Masuk</h3>
 <input id="mBarang" placeholder="Nama Barang">
-<input id="mJumlah" type="number" placeholder="Jumlah">
+<select id="mJenis"><option>Barang Modal</option><option>BAJAS</option></select>
+<select id="mDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
+<input type="number" id="mJumlah" placeholder="Jumlah">
+<select id="mSatuan"><option>pcs</option><option>unit</option></select>
 <button class="success" onclick="barangMasuk()">Simpan</button>
 </div>
 
-<div class="card">
+<!-- KELUAR -->
+<div class="card hidden" id="keluar">
 <h3>Barang Keluar</h3>
-<select id="kBarang"></select>
-<input id="kJumlah" type="number">
+<select id="kBarang" onchange="isiJenisDana()"></select>
+<select id="kJenis"><option>Barang Modal</option><option>BAJAS</option></select>
+<select id="kDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
+<input type="number" id="kJumlah">
+<select id="kSatuan"><option>pcs</option><option>unit</option></select>
+<input id="kAmbil" placeholder="Pengambil">
 <button class="danger" onclick="barangKeluar()">Simpan</button>
 </div>
 
+<!-- TABEL -->
 <div class="card">
 <table id="tabel"></table>
 </div>
@@ -96,17 +128,20 @@ box-sizing:border-box;
 </div>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL EDIT -->
 <div id="modalEdit">
 <div class="box">
 <h3>Edit Data</h3>
 
 <input id="eBarang">
-<input id="eJumlah" type="number">
+<select id="eJenis"><option>Barang Modal</option><option>BAJAS</option></select>
+<select id="eDana"><option>BOSKAB 1</option><option>BOSKAB 2</option><option>BOP 1</option><option>BOP 2</option></select>
+<input type="number" id="eJumlah">
+<select id="eSatuan"><option>pcs</option><option>unit</option></select>
+<input id="eAmbil" placeholder="Pengambil">
 
 <button class="success" onclick="simpanEdit()">Simpan</button>
 <button onclick="tutupModal()">Batal</button>
-
 </div>
 </div>
 
@@ -123,13 +158,56 @@ update();
 
 function logout(){localStorage.clear();location.reload();}
 
+function show(id){
+masuk.classList.add('hidden');
+keluar.classList.add('hidden');
+document.getElementById(id).classList.remove('hidden');
+}
+
+function getStok(n,j,d,s){
+let m=0,k=0;
+data.forEach(x=>{
+if(x.barang===n&&x.jenis===j&&x.dana===d&&x.satuan===s){
+if(x.tipe==='Masuk') m+=x.jumlah;
+if(x.tipe==='Keluar') k+=x.jumlah;
+}});
+return m-k;
+}
+
 function barangMasuk(){
-data.push({tipe:'Masuk',barang:mBarang.value,jumlah:+mJumlah.value});
+data.push({
+tipe:'Masuk',
+barang:mBarang.value,
+jenis:mJenis.value,
+dana:mDana.value,
+jumlah:+mJumlah.value,
+satuan:mSatuan.value
+});
 simpan();
 }
 
+function isiJenisDana(){
+let d=data.find(x=>x.barang===kBarang.value);
+if(d){
+kJenis.value=d.jenis;
+kDana.value=d.dana;
+kSatuan.value=d.satuan;
+}
+}
+
 function barangKeluar(){
-data.push({tipe:'Keluar',barang:kBarang.value,jumlah:+kJumlah.value});
+let stok=getStok(kBarang.value,kJenis.value,kDana.value,kSatuan.value);
+if(kJumlah.value>stok) return alert("Stok tidak cukup!");
+
+data.push({
+tipe:'Keluar',
+barang:kBarang.value,
+jenis:kJenis.value,
+dana:kDana.value,
+jumlah:+kJumlah.value,
+satuan:kSatuan.value,
+ambil:kAmbil.value
+});
 simpan();
 }
 
@@ -143,10 +221,13 @@ function update(){
 kBarang.innerHTML='';
 [...new Set(data.map(d=>d.barang))].forEach(b=>kBarang.innerHTML+=`<option>${b}</option>`);
 
-tabel.innerHTML=`<tr><th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th><th>Aksi</th></tr>`;
+tabel.innerHTML=`<tr>
+<th>No</th><th>Tipe</th><th>Barang</th><th>Jumlah</th><th>Sisa</th><th>Aksi</th>
+</tr>`;
 
 data.slice().reverse().forEach((d,i)=>{
 let idx=data.length-1-i;
+let stok=getStok(d.barang,d.jenis,d.dana,d.satuan);
 
 tabel.innerHTML+=`
 <tr>
@@ -154,15 +235,30 @@ tabel.innerHTML+=`
 <td>${d.tipe}</td>
 <td>${d.barang}</td>
 <td>${d.jumlah}</td>
+<td>${stok}</td>
 <td>
 <button onclick="openEdit(${idx})">Edit</button>
 <button onclick="hapusData(${idx})" class="danger">Hapus</button>
 </td>
 </tr>`;
 });
+
+// ringkasan
+let sum={};
+data.forEach(d=>{
+if(!sum[d.barang]) sum[d.barang]=0;
+if(d.tipe==='Masuk') sum[d.barang]+=d.jumlah;
+if(d.tipe==='Keluar') sum[d.barang]-=d.jumlah;
+});
+
+ringkasan.innerHTML='';
+for(let k in sum){
+ringkasan.innerHTML+=`<p>${k}: ${sum[k]}</p>`;
 }
 
-// MODAL
+}
+
+// EDIT MODAL
 function openEdit(i){
 editIndex=i;
 let d=data[i];
@@ -170,7 +266,11 @@ let d=data[i];
 modalEdit.classList.add('show');
 
 eBarang.value=d.barang;
+eJenis.value=d.jenis;
+eDana.value=d.dana;
 eJumlah.value=d.jumlah;
+eSatuan.value=d.satuan;
+eAmbil.value=d.ambil||'';
 }
 
 function simpanEdit(){
@@ -179,7 +279,11 @@ let d=data[editIndex];
 data[editIndex]={
 ...d,
 barang:eBarang.value,
-jumlah:+eJumlah.value
+jenis:eJenis.value,
+dana:eDana.value,
+jumlah:+eJumlah.value,
+satuan:eSatuan.value,
+ambil:eAmbil.value
 };
 
 simpan();
